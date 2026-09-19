@@ -13,7 +13,7 @@ resolution: https://mail.python.org/pipermail/python-dev/2017-May/147957.html
 python_status: Active
 url: https://peps.python.org/pep-0545/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0545.rst
-source_commit: 633d497b44ac16e8c538cc3ab6646bfdcab4a337
+source_commit: f271bf92e9f588391b20596409dfaf9ca4cc454f
 ---
 
 # Abstract
@@ -492,7 +492,7 @@ As soon as the translation hits:
 - 100% of bugs.html with proper links to the language repository issue
   tracker.
 - 100% of tutorial.
-- 100% of library/functions (builtins).
+- 100% of builtins/functions.
 
 the translation can be added to the language switcher.
 

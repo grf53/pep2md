@@ -4,7 +4,7 @@ title: Docstrings for Type Aliases
 author:
 - Bartosz Sławecki <bartosz@ilikepython.com>
 sponsor: Jelle Zijlstra <jelle.zijlstra@gmail.com>
-discussions_to: Pending
+discussions_to: https://discuss.python.org/t/pep-846-docstrings-for-type-aliases/109116
 status: Draft
 type: Standards Track
 topic: Typing
@@ -12,10 +12,11 @@ created: 06-Sep-2026
 python_version: '3.16'
 post_history:
 - '`06-Sep-2026 <https://discuss.python.org/t/docstrings-for-type-aliases/108901>`__'
+- '`18-Sep-2026 <https://discuss.python.org/t/pep-846-docstrings-for-type-aliases/109116>`__'
 python_status: Draft
 url: https://peps.python.org/pep-0846/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0846.rst
-source_commit: 4393616b16c8d364f967a8247cae8ad9ef75f330
+source_commit: ac723cfc3c0c44a070c426db86e66934f9276510
 ---
 
 # Abstract
@@ -91,7 +92,7 @@ role="py:keyword"} statements: a string literal immediately following
 the statement becomes the alias\'s docstring.
 
 If the next logical line after a `type`{.interpreted-text
-role="py:keyword"} statement in the same suite is an expression
+role="py:keyword"} statement in the same block is an expression
 statement consisting of a string literal, that string is the alias\'s
 docstring and is part of the `type`{.interpreted-text role="py:keyword"}
 statement. Comments and blank lines may appear between the
@@ -110,8 +111,8 @@ default_timeout = 30
 
 The rule applies wherever a `type`{.interpreted-text role="py:keyword"}
 statement is allowed, including inside functions, classes, and
-control-flow suites. The string must be in the same suite as the alias.
-A string in a nested or enclosing suite does not qualify. Generic
+control-flow blocks. The string must be in the same block as the alias.
+A string in a nested or enclosing block does not qualify. Generic
 aliases follow the same rule:
 
 ``` python
@@ -335,13 +336,13 @@ The grammar rule for the `type`{.interpreted-text role="py:keyword"}
 statement gains an optional group that parses the expression statement
 on the following logical line. The `type_alias_docstring[expr_ty]` rule
 uses an action helper that returns the expression node if it is a string
-constant. Otherwise it returns `NULL` without setting an error, the
-group fails, and the parser backtracks to before the newline. Blank
-lines and comment-only lines do not prevent the parser from recognizing
-the docstring. The string must be in the same suite as the
-`type`{.interpreted-text role="py:keyword"} statement. The type alias
-action extracts the constant\'s string value and stores it in the `doc`
-field.
+constant. Otherwise, the helper returns `NULL` without setting an error.
+This causes the optional group to fail, so the parser backtracks to
+before the newline. Blank lines and comment-only lines do not prevent
+the parser from recognizing the docstring. The string must be in the
+same block as the `type`{.interpreted-text role="py:keyword"} statement.
+The type alias action extracts the constant\'s string value and stores
+it in the `doc` field.
 
 The `pydoc`{.interpreted-text role="py:mod"} implementation requests the
 alias expression in string format. This evaluation can trigger lazy

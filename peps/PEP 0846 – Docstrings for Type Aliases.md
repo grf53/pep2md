@@ -16,7 +16,7 @@ post_history:
 python_status: Draft
 url: https://peps.python.org/pep-0846/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0846.rst
-source_commit: ac723cfc3c0c44a070c426db86e66934f9276510
+source_commit: 14beea5d8fa2ebae4ac3b408d6bb4c84b26cff08
 ---
 
 # Abstract
@@ -261,9 +261,11 @@ type Timeout = float | None
     See help(typing.TypeAliasType) for the full type alias interface.
 ```
 
-This PEP does not add automatic discovery of type alias docstrings to
-`doctest`{.interpreted-text role="py:mod"}. Supporting this would
-require a separate change to its discovery rules.
+`doctest`{.interpreted-text role="py:mod"} discovers type alias
+docstrings in modules and classes, and accepts type alias objects in a
+module\'s `__test__` dictionary. As with functions and classes, aliases
+imported from other modules are excluded from automatic discovery.
+Discovery does not evaluate alias values.
 
 # Rationale
 
@@ -331,6 +333,8 @@ A CPython prototype is available at these revisions:
   support](https://github.com/johnslavik/cpython/commit/a807d9bd68eaf2243b4869a4c2213c705ec18206).
 - [pydoc
   support](https://github.com/johnslavik/cpython/commit/67f572e4cadc0eeef9f1d8cbd22404622ccc2c92).
+- [doctest
+  discovery](https://github.com/johnslavik/cpython/commit/25044689382307876f310c23fd94e5662aab22b1).
 
 The grammar rule for the `type`{.interpreted-text role="py:keyword"}
 statement gains an optional group that parses the expression statement

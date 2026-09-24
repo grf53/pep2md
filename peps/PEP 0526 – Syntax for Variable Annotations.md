@@ -19,7 +19,7 @@ resolution: https://mail.python.org/pipermail/python-dev/2016-September/146282.h
 python_status: Final
 url: https://peps.python.org/pep-0526/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0526.rst
-source_commit: ce822eb8e04731241f324395958321c84274f2a1
+source_commit: d3f0eafe7ebf77c7cc3b8b29102b0561e507f4d9
 ---
 
 ::: canonical-typing-spec
@@ -438,13 +438,13 @@ example:
 
     from typing import Dict
     class Player:
-        ...
+        __points: int
     players: Dict[str, Player]
-    __points: int
 
     print(__annotations__)
-    # prints: {'players': typing.Dict[str, __main__.Player],
-    #          '_Player__points': <class 'int'>}
+    # prints: {'players': typing.Dict[str, __main__.Player]}
+    print(Player.__annotations__)
+    # prints: {'_Player__points': <class 'int'>}
 
 `__annotations__` is writable, so this is permitted:
 

@@ -17,7 +17,7 @@ post_history:
 python_status: Draft
 url: https://peps.python.org/pep-0832/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0832.rst
-source_commit: 4abb9a0dbeb57958c7b1d10573dcb3370749055c
+source_commit: b26a876c039e8e3609f1458dd2e24a41e5645ce2
 ---
 
 # Abstract
@@ -98,16 +98,15 @@ use.
 Instead of a directory containing a virtual environment, the root of a
 project MAY have a `.venv`{.interpreted-text role="file"} redirect file.
 This file acts as a pointer to where the (current) virtual environment
-to be used for the project is located. This virtual environment may not
-be the only environment associated with the project, but it is
-considered the preferred virtual environment to use *at the moment* by
-other tools. The tool managing the virtual environment SHOULD update any
-`.venv`{.interpreted-text role="file"} redirect file as appropriate when
-the tool or the user desire a different virtual environment to be used
-by default by other tools. As well, other tools that did not initially
-create the `.venv`{.interpreted-text role="file"} redirect file SHOULD
-NOT overwrite it without the user somehow expressing a desire for the
-change of \"ownership\" of the file.
+to be used for the project is located (which, just like a
+`.venv`{.interpreted-text role="file"} directory, can be a logical or
+pysical path). This virtual environment may not be the only environment
+associated with the project, but it is considered the preferred virtual
+environment to use *at the moment* by other tools. The tool managing the
+virtual environment SHOULD update any `.venv`{.interpreted-text
+role="file"} redirect file as appropriate when the tool or the user
+desire a different virtual environment to be used by default by other
+tools.
 
 Tools looking for a virtual environment SHOULD look for either a
 `.venv`{.interpreted-text role="file"} directory or a
@@ -122,10 +121,10 @@ and MUST be ignored. An empty file or one that only contains a newline
 is considered invalid.
 
 The line in the `.venv`{.interpreted-text role="file"} redirect file
-MUST point to a directory containing a virtual environment. The path MAY
-use POSIX path separators\-- `/` \--regardless of what the operating
-system\'s native path separator is. The path MAY be relative, and if so
-MUST be relative to the directory containing the
+MUST point to a directory containing a virtual environment when being
+written. The path MAY use POSIX path separators\-- `/` \--regardless of
+what the operating system\'s native path separator is. The path MAY be
+relative, and if so MUST be relative to the directory containing the
 `.venv`{.interpreted-text role="file"} file.
 
 With regard to committing a `.venv`{.interpreted-text role="file"}
@@ -143,9 +142,10 @@ actual virtual environment to version control is unchanged by this PEP.
 IF a tool can detect that an environment is already in use (e.g. the
 `VIRTUAL_ENV` environment variable is set), THEN tools SHOULD respect
 the user\'s choice and use the activated/in-use environment over the
-default environment when no previous environment selection has occurred.
-Tools MAY choose to override even a previous environment selection if an
-environment is detected as activated/in use.
+default environment when no previous environment selection has occurred
+or the tool doesn\'t have its own justification for ignoring the user\'s
+supposed choice. Tools MAY choose to override even a previous
+environment selection if an environment is detected as activated/in use.
 
 This PEP is choosing NOT to take a position on what to do if
 `.venv`{.interpreted-text role="file"} is invalid (whether it\'s a
@@ -490,6 +490,15 @@ on the initial draft of this PEP.
 
 # Change History
 
+- 24-Sep-2026
+  - Clarify `.venv`{.interpreted-text role="file"} redirect files can be
+    logical or physical paths just like `.venv`{.interpreted-text
+    role="file"} directories
+  - Specify that tool can ignore supposed user selections if the tool
+    has a justification to
+  - Clarify that `.venv`{.interpreted-text role="file"} redirect files
+    have to be valid paths **when written**; this can\'t really be
+    enforced upon reading
 - 08-Sep-2026
   - Switch back to `.venv`{.interpreted-text role="file"} redirect files
     from `.python-envs`{.interpreted-text role="file"} files

@@ -11,7 +11,7 @@ python_version: '3.11'
 python_status: Active
 url: https://peps.python.org/pep-0664/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0664.rst
-source_commit: 0d42676ed623572ce385fd51b6b47208642baf47
+source_commit: a36ec367781c01fb3d48d60f8ef791186a9729e7
 ---
 
 # Abstract
@@ -78,6 +78,7 @@ Provided irregularly on an \"as-needed\" basis until October 2027.
 - 3.11.13: Tuesday, 2025-06-03
 - 3.11.14: Thursday, 2025-10-09
 - 3.11.15: Tuesday, 2026-03-03
+- 3.11.16: Wednesday, 2026-08-12
 
 ## 3.11 Lifespan
 

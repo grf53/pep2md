@@ -11,7 +11,7 @@ python_version: '3.12'
 python_status: Active
 url: https://peps.python.org/pep-0693/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0693.rst
-source_commit: 42b1604aaf76d878f4803b26744afddf81c0c043
+source_commit: cf23756653771281131eeac12ae05c1b222378a6
 ---
 
 # Abstract
@@ -76,6 +76,7 @@ Provided irregularly on an as-needed basis until October 2028.
 - 3.12.11: Tuesday, 2025-06-03
 - 3.12.12: Thursday, 2025-10-09
 - 3.12.13: Tuesday, 2026-03-03
+- 3.12.14: Wednesday, 2026-08-12
 
 ## 3.12 Lifespan
 

@@ -11,7 +11,7 @@ python_version: '3.10'
 python_status: Active
 url: https://peps.python.org/pep-0619/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0619.rst
-source_commit: f90a7cbfb3d1a4b2daec29c5c5bd5ba12adf11e7
+source_commit: 5014379cf848cd026496d05278dfd54a4ff25085
 ---
 
 # Abstract
@@ -82,6 +82,7 @@ Provided irregularly on an \"as-needed\" basis until October 2026.
 - 3.10.18: Tuesday, 2025-06-03
 - 3.10.19: Thursday, 2025-10-09
 - 3.10.20: Tuesday, 2026-03-03
+- 3.10.21: Wednesday, 2026-08-12
 
 ## 3.10 Lifespan
 

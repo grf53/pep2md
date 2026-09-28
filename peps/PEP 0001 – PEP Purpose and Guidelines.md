@@ -18,7 +18,7 @@ post_history:
 python_status: Active
 url: https://peps.python.org/pep-0001/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0001.rst
-source_commit: 1c2fbbeeec5efbf3a846634af1198b0c53c4a073
+source_commit: e90d7ff8787fdfd4ac60d4b749ff712b953723b9
 ---
 
 # What is a PEP?
@@ -605,12 +605,11 @@ Each PEP should have the following parts/sections:
 13. Footnotes \-- A collection of footnotes cited in the PEP, and a
     place to list non-inline hyperlink targets.
 
-Change History \-- A summary of major changes the PEP has undergone, based on
-
-:   discussions and feedback. Think of this as a \"changelog\" or
-    \"release notes\" for the PEP. In general, whenever you update the
-    `Post-History` header for major changes, add a new bullet item in
-    newest-first (i.e. reverse chronological) order, using the same
+14. Change History \-- A summary of major changes the PEP has undergone,
+    based on discussions and feedback. Think of this as a \"changelog\"
+    or \"release notes\" for the PEP. In general, whenever you update
+    the `Post-History` header for major changes, add a new bullet item
+    in newest-first (i.e. reverse chronological) order, using the same
     `DD-MMM-YYYY` format, with sub-bullets summarizing the changes. You
     can consider linking this to the same link as the `Post-History`
     link. This isn\'t mandatory, so it\'s left to the PEP author\'s
@@ -618,9 +617,8 @@ Change History \-- A summary of major changes the PEP has undergone, based on
     along to understand the evolution of your PEP. Here is `an
     example <694#change-history>`{.interpreted-text role="pep"}.
 
-15\. Copyright/license \-- Each new PEP must be placed under a dual license of
-
-:   public domain and
+15. Copyright/license \-- Each new PEP must be placed under a dual
+    license of public domain and
     [CC0-1.0-Universal](https://choosealicense.com/licenses/cc0-1.0/)
     (see this PEP for an example).
 

@@ -2,7 +2,7 @@
   "source": "github-http",
   "repo_url": "https://github.com/python/peps.git",
   "branch": "main",
-  "head_commit": "ce48c4ecdd0692e265537f10b09fb3fcf7dc76f3",
+  "head_commit": "50803e5f0aa404f34093c16d13a9bd7d21d904d1",
   "pep_sha": {
     "1": "e90d7ff8787fdfd4ac60d4b749ff712b953723b9",
     "2": "92649bd6d046664f6b4cab4e912f1b3398166fbb",
@@ -664,7 +664,7 @@
     "845": "c57ddedd0894baa7790224963468bafe60df7848",
     "846": "14beea5d8fa2ebae4ac3b408d6bb4c84b26cff08",
     "847": "4fe70fbbaede57bf4e0dcfd956ac3594a643462f",
-    "848": "80dc3d16c80960a55e32f8ba909c988af86cde91",
+    "848": "1a0d93d2b50a3cebe9c710145cde729c5c0deb36",
     "849": "3a0c5931e799f8dd621f16729302e5e63391c8d7",
     "2026": "ecc6f2e7838125b8b930bb0de4393281a664f632",
     "3000": "13bbbffbbebc224d5cc069bf417664b4222c23b9",

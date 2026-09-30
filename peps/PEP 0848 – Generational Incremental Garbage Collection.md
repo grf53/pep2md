@@ -11,7 +11,7 @@ python_version: '3.16'
 python_status: Draft
 url: https://peps.python.org/pep-0848/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0848.rst
-source_commit: 80dc3d16c80960a55e32f8ba909c988af86cde91
+source_commit: 1a0d93d2b50a3cebe9c710145cde729c5c0deb36
 ---
 
 # Abstract
@@ -201,7 +201,7 @@ space (space 5 in the diagram above) are collected.
            reachable to visited. They are reachable and cannot be garbage.
         """
         moved_to_visited = 0
-        while reachable:
+        while reachable and moved_to_visited < limit:
             root = reachable.pop()
             visited.append(root)
             moved_to_visited += 1
@@ -209,8 +209,6 @@ space (space 5 in the diagram above) are collected.
                 if obj in pending:
                     pending.remove(obj)
                     reachable.append(obj)
-        if moved_to_visited >= limit:
-            return moved_to_visited
         return moved_to_visited
 
     def old_collection():
@@ -230,14 +228,14 @@ space (space 5 in the diagram above) are collected.
             # form transitive closure starting at obj, taking objects from pending
             increment = form_transitive_closure(obj, pending)
             candidates = len(increment)
+            work_to_do -= candidates
             survivors = collect_cycles(increment)
-            work_to_do -= survivors
-            collected = candidates - survivors
-            # If we are collecting lots of objects, that means
-            # there is a lot of cycle garbage and we need to
-            # sweep the heap faster.
-            work_to_do += 2 * collected
+            collected = candidates - len(survivors)
             visited_space.extend(survivors)
+            # If we are collecting lots of objects, that means
+            # there is a lot of cycle garbage and we should sweep
+            # the heap faster to keep the amount of garbage down
+            work_to_do += 2 * collected
 
 ## The legacy collector
 
@@ -286,11 +284,18 @@ spaces is always rounded up to an even number.
 
 ## Performance
 
-Performance is improved relative to the current collector. The
-performance improvements come from doing less work in the young
-generations (one collection per object, not two) and doing less work in
-the old generation due to the lower survivor rate from the young
-generations.
+The new collector reduces the overhead of cyclic garbage collection by
+almost half, although the exact amount depends on the application.
+
+By allowing objects longer to die, the effectiveness of the collector is
+improved. This allows it to collect the same amount of garbage for less
+work. Performance is further improved by scanning fewer objects during
+collections:
+
+- In the young generation: each object is only scanned once, instead of
+  twice in the generational GC
+- In the old generation: objects are scanned at a lower rate, only
+  increasing that rate when necessary to collect excess garbage
 
 ## Peak Memory Consumption
 
@@ -396,23 +401,6 @@ frequent collections will usually mean shorter pauses per collection.
 
 # Future work
 
-## Further reducing pause times
-
-While the reference implementation is 1-2% faster than main (with the
-generational GC), it can still have long pause times on large object
-graphs. Many of the benchmarks have a single large tree as their object
-graph, and this can result in long pauses, as an increment starting at
-the root of the tree will contain almost the whole heap.
-
-This could be improved in a few ways:
-
-- Sorting the increments as they are either created or sent to the old
-  generation, so that the objects farthest from the root are picked
-  first in the next collection.
-- Traversing the stack prior to increment formation to skip reachable
-  objects. This will complicate the algorithm, but could save
-  significant amounts of work in some cases.
-
 ## Porting to the free-threaded build
 
 Porting the incremental GC to the free-threaded build will need a few
@@ -428,6 +416,19 @@ changes:
   replaced with external arrays for the young generation and the
   increments. The free-threaded GC already needs to do this to partition
   garbage and survivors.
+
+## Further reducing pause times
+
+While the reference implementation generally has shorter pause times, it
+can still have long pause times if the transitive closure needed for an
+increment is large.
+
+It may be possible to scan increments over multiple collections, keeping
+each pause short. This would be challenging as the program may transform
+the object graph of the increment between collections, but garbage
+cycles cannot be modified by the program so this might be possible.
+There is extensive research on concurrent collectors which also have to
+handle similar problems.
 
 # Reference Implementation
 

@@ -4,15 +4,18 @@ title: Adding the Core of the Pyodide Foreign Function Interface to Python
 author:
 - Hood Chatham <roberthoodchatham at gmail.com>
 sponsor: Łukasz Langa <lukasz at python.org>
-discussions_to: https://discuss.python.org/t/pep-818-upstreaming-the-pyodide-ffi/105530
+discussions_to: https://discuss.python.org/t/pep-818-adding-the-core-of-the-pyodide-foreign-function-interface-to-python-2/109311
 status: Draft
 type: Standards Track
 created: 10-Dec-2025
 python_version: '3.16'
+post_history:
+- '`05-Jan-2026 <https://discuss.python.org/t/pep-818-upstreaming-the-pyodide-ffi/105530>`__'
+- '`01-Oct-2026 <https://discuss.python.org/t/pep-818-adding-the-core-of-the-pyodide-foreign-function-interface-to-python-2/109311>`__'
 python_status: Draft
 url: https://peps.python.org/pep-0818/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0818.rst
-source_commit: 6eb478744f90d52c7a329271c1cc3d9d07c6d206
+source_commit: d8411a04cc37a7bb62da3803b04f50c142eefd78
 ---
 
 # Abstract
@@ -69,11 +72,8 @@ JavaScript foreign function interface, it will be possible to support
 `httpx` requires the foreign function interface.
 
 In order to keep the length of this PEP reasonable, we focus on the
-\"core\" of the foreign function interface. The following areas are left
-to future PEPs:
-
-1.  asyncio
-2.  a JavaScript interface for managing the Python runtime
+\"core\" of the foreign function interface. The JavaScript interface for
+managing the Python runtime is left to a future PEP.
 
 # Rationale
 
@@ -1440,7 +1440,7 @@ The event loop also creates custom futures `WebFuture` and `WebTask`.
 These are like normal futures and tasks except that they also implement
 the JavaScript Promise methods `then()`, `catch()` and `finally_()`.
 This is so that code can work consistently regardless of whether they
-have a `Promise` a `WebFuture` or a `WebTask`.
+have a `Promise`, a `WebFuture` or a `WebTask`.
 
 ### Adapting from a Python awaitable to a JavaScript awaitable
 
@@ -1468,11 +1468,11 @@ from calling `pyawaitable_to_promise()`.
 
 The key function here is `jsawaitable_to_pyawaitable`. Most of the logic
 in `jsawaitable_to_pyawaitable` revolves around the fact that we need to
-take care that when when the promise is resolved or rejected, we release
-both `future.set_result()` and `future.set_exception()`. When a
-`Promise` is returned from a JavaScript function, we use the
-`done_callback` optional argument to release the Python arguments to the
-JavaScript function after the promise resolves. See
+take care that when the promise is resolved or rejected, we release both
+`future.set_result()` and `future.set_exception()`. When a `Promise` is
+returned from a JavaScript function, we use the `done_callback` optional
+argument to release the Python arguments to the JavaScript function
+after the promise resolves. See
 `calling-js-from-python`{.interpreted-text role="ref"}.
 
 The implementation of `__await__` on a JsProxy is as follows:
@@ -1630,13 +1630,36 @@ Python can run on.
 
 # How to Teach This
 
+Pyodide has maintained a user guide for this foreign function interface
+for several years, and the existing [Pyodide type translation
+documentation](https://pyodide.org/en/stable/usage/type-conversions.html)
+can be adapted to form the basis of the CPython documentation.
+
+We have substantial experience in teaching users how to use Pyodide and
+for the most part they find it very intuitive. The main area that trips
+up users is memory management of `PyProxy` objects. For this reason, we
+have taken special care to design the memory management error messages
+to be actionable.
+
+# Change History
+
+- 30-Sept-2026
+
+  > - Reduced the amount of detail in the specification section.
+  > - Added support for proxying and conversion of buffers.
+  > - Added asyncio support, including an event loop, conversion between
+  >   Python and JavaScript awaitables, and deferred destruction for
+  >   arguments to an asynchronous JavaScript function called from
+  >   Python.
+
 # Reference Implementation
 
 Pyodide, <https://github.com/hoodmane/cpython/tree/js-ffi>
 
 # Acknowledgments
 
-Mike Droettboom, Roman Yurchak, Gyeongjae Choi, Andrea Giammarchi
+Mike Droettboom, Roman Yurchak, Gyeongjae Choi, Andrea Giammarchi, and
+Thorsten Beier.
 
 # Copyright
 

@@ -11,7 +11,7 @@ python_version: '3.13'
 python_status: Active
 url: https://peps.python.org/pep-0719/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0719.rst
-source_commit: 852fad36639f4170acb835457256ad8f7795bd87
+source_commit: 0220c6a46004ddea358906df52c84756c7c69a99
 ---
 
 # Abstract
@@ -72,11 +72,8 @@ Actual:
 - 3.13.13: Tuesday, 2026-04-07
 - 3.13.14: Wednesday, 2026-06-10
 - 3.13.15: Wednesday, 2026-08-05
-
-Expected:
-
-- 3.13.16: Tuesday, 2026-10-06 (Final regular bugfix release with binary
-  installers)
+- 3.13.16: Thursday, 2026-10-01 (Final regular bugfix release with
+  binary installers)
 
 ## Source-only security fix releases
 
@@ -84,12 +81,11 @@ Provided irregularly on an as-needed basis until October 2029.
 
 ## 3.13 Lifespan
 
-3.13 will receive bugfix updates approximately every 2 months for
+3.13 received bugfix updates approximately every 2 months for
 approximately 24 months. Around the time of the release of 3.15.0 final,
-the final 3.13 bugfix update will be released. After that, it is
-expected that security updates (source only) will be released until 5
-years after the release of 3.13.0 final, so until approximately October
-2029.
+the final 3.13 bugfix update was released. After that, it is expected
+that security updates (source only) will be released until 5 years after
+the release of 3.13.0 final, so until approximately October 2029.
 
 # Copyright
 

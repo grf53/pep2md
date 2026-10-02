@@ -14,7 +14,7 @@ post_history:
 python_status: Draft
 url: https://peps.python.org/pep-0823/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0823.rst
-source_commit: 4f84bbb92e6add5d04a95401ead214fc67d10481
+source_commit: ccb74052c6cfa0a5e795da2df95a2abb0f00940a
 ---
 
 # Abstract
@@ -152,8 +152,10 @@ of expressions much simpler while being predictable and doing the
 correct things intuitively. Using these operators, the function could
 instead be written as:
 
-    def get_customer_name(data: Data) -> str | None:
-        return data.customer?.user?.name.lower()
+``` py823
+def get_customer_name(data: Data) -> str | None:
+    return data.customer?.user?.name.lower()
+```
 
 Here `?` are inserted after each `optional` subexpression to change the
 attribute access to \"`None`-aware attribute access\" operators. In
@@ -198,8 +200,10 @@ def get_customer_name(data: Data) -> str | None:
 
 Writing it using `?.` and `?[ ]` would look like this:
 
-    def get_customer_name(data: Data) -> str | None:
-        return data.get("customer")?["user"]?["name"].lower()
+``` py823
+def get_customer_name(data: Data) -> str | None:
+    return data.get("customer")?["user"]?["name"].lower()
+```
 
 ## Other common patterns
 
@@ -222,62 +226,68 @@ property, the expression cannot necessarily be replaced with `?.` or
 `?[ ]`.
 ::::
 
-    # In assignments
+``` py823
+# In assignments
 
-    x = a.b if (a is not None) else None
-    x = a?.b
+x = a.b if (a is not None) else None
+x = a?.b
+```
 
-    # In if statements often used as guard clause with early
-    # return or raising of an exception
+``` py823
+# In if statements often used as guard clause with early
+# return or raising of an exception
 
-    if not (a and a.b == val): ...
-    if a?.b != val: ...
+if not (a and a.b == val): ...
+if a?.b != val: ...
 
-    if not (a and a.lower()): ...
-    if not a?.lower(): ...
+if not (a and a.lower()): ...
+if not a?.lower(): ...
 
-    if a is None or a.b is None: ...
-    if a?.b is None: ...
+if a is None or a.b is None: ...
+if a?.b is None: ...
+```
 
-    # Misc expressions
+``` py823
+# Misc expressions
 
-    # Each of these results still needs to be checked for the
-    # negative case, though falsy values are usually enough.
-    # It often does not matter whether it is 'False' or 'None'.
+# Each of these results still needs to be checked for the
+# negative case, though falsy values are usually enough.
+# It often does not matter whether it is 'False' or 'None'.
 
-    a and a.b and a.b.c
-    a?.b?.c
+a and a.b and a.b.c
+a?.b?.c
 
-    a.b and a.b[0].c and a.b[0].c.d and a.b[0].c.d[0].e
-    a.b?[0].c?.d?[0].e
+a.b and a.b[0].c and a.b[0].c.d and a.b[0].c.d[0].e
+a.b?[0].c?.d?[0].e
 
-    d1: dict | None
-    d1 and key in d1 and d1[key]
-    d1?.get(key)
+d1: dict | None
+d1 and key in d1 and d1[key]
+d1?.get(key)
 
-    d2: dict
-    key in d2 and d2[key][other]
-    d2.get(key)?[other]
+d2: dict
+key in d2 and d2[key][other]
+d2.get(key)?[other]
 
-    key in d2 and d2[key].do_something()
-    d2.get(key)?.do_something()
+key in d2 and d2[key].do_something()
+d2.get(key)?.do_something()
 
-    (c := a.b) and c.startswith(key)
-    a.b?.startswith(key)
+(c := a.b) and c.startswith(key)
+a.b?.startswith(key)
 
-    (b := a.get(key)) and b.get(other) == 2
-    a.get(key)?.get(other) == 2
+(b := a.get(key)) and b.get(other) == 2
+a.get(key)?.get(other) == 2
 
-    (b := a.get(key)) and b.strip().lower()
-    a.get(key)?.strip().lower()
+(b := a.get(key)) and b.strip().lower()
+a.get(key)?.strip().lower()
 
 
-    # Sometimes actions should only be performed
-    # if a variable is not None
+# Sometimes actions should only be performed
+# if a variable is not None
 
-    if timeout_handle is not None:
-        timeout_handle.cancel()
-    timeout_handle?.cancel()
+if timeout_handle is not None:
+    timeout_handle.cancel()
+timeout_handle?.cancel()
+```
 
 # Specification
 
@@ -326,9 +336,11 @@ trying to get a subscript of `None` are omitted. It is therefore not
 necessary to change subsequent `.` or `[ ]` on the right-hand side just
 because a `?.` or `?[ ]` is used prior.
 
-    >>> a = None
-    >>> print(a?.b.c[0].some_function())
-    None
+``` py823-console
+>>> a = None
+>>> print(a?.b.c[0].some_function())
+None
+```
 
 The `None`-aware access operators will only short-circuit expressions
 containing primary expressions (name, attribute access, subscript, their
@@ -336,18 +348,20 @@ containing primary expressions (name, attribute access, subscript, their
 short-circuiting is broken once an operator other than `.`, `[ ]`, `?.`,
 `?[ ]` is reached.
 
-    >>> a = None
-    >>> print(a?.b.c)
-    None
-    >>> print(a?.b.c or "Hello")
-    'Hello'
-    >>> 2 in a?.b.c
-    Traceback (most recent call last):
-    File "<python-input>", line 1, in <module>
-        2 in a?.b.c
-    TypeError: argument of type 'NoneType' is not a container or iterable
-    >>> 2 in (a?.b.c or ())
-    False
+``` py823-console
+>>> a = None
+>>> print(a?.b.c)
+None
+>>> print(a?.b.c or "Hello")
+'Hello'
+>>> 2 in a?.b.c
+Traceback (most recent call last):
+File "<python-input>", line 1, in <module>
+    2 in a?.b.c
+TypeError: argument of type 'NoneType' is not a container or iterable
+>>> 2 in (a?.b.c or ())
+False
+```
 
 Another way to look at this is to ask whether a part of an expression
 could be extracted and defined as a variable without changing the
@@ -356,11 +370,13 @@ broken. For example function arguments or subscripts are evaluated on
 their own and would not short-circuit the remaining `tail` of the outer
 expression.
 
-    # func(a?.b).c[d?.e]
+``` py823
+# func(a?.b).c[d?.e]
 
-    _t1 = a?.b
-    _t2 = d?.e
-    func(_t1).c[_t2]
+_t1 = a?.b
+_t2 = d?.e
+func(_t1).c[_t2]
+```
 
 ### Parenthesized expressions - groupings
 
@@ -372,53 +388,61 @@ the expression `(a?.b).c` will raise an `AttributeError` on `.c` if
 contents and storing the result in a temporary variable before
 substituting it back into the original expression.
 
-    # (a?.b).c
+``` py823
+# (a?.b).c
 
-    _t = a?.b
-    _t.c
+_t = a?.b
+_t.c
+```
 
 Common use cases for `None`-aware access operators in groups are boolean
 or conditional expressions which can provide a fallback value in case
 the first part evaluates to `None`.
 
-    (a.b?.c or d).e?.func()
+``` py823
+(a.b?.c or d).e?.func()
 
-    # a.b?.c
-    _t2 = _t1.c if ((_t1 := a.b) is not None) else None
+# a.b?.c
+_t2 = _t1.c if ((_t1 := a.b) is not None) else None
 
-    # (... or d)
-    _t3 = _t2 if _t2 else d
+# (... or d)
+_t3 = _t2 if _t2 else d
 
-    # (...).e?.func()
-    _t4.func() if ((_t4 := _t3.e) is not None) else None
+# (...).e?.func()
+_t4.func() if ((_t4 := _t3.e) is not None) else None
+```
 
 ### Assignments
 
 `None`-aware expressions may only be used in a `Load` context.
 Assignments are not permitted and will raise a `SyntaxError`.
 
-    >>> a?.b = 1
-    File "<python-input-1>", line 1
-        a?.b = 1
-        ^^^^
-    SyntaxError: cannot assign to none aware expression
+``` py823-console
+>>> a?.b = 1
+File "<python-input-1>", line 1
+    a?.b = 1
+    ^^^^
+SyntaxError: cannot assign to none aware expression
 
-    >>> a?.b.c.d = 1
-    File "<python-input-1>", line 1
-        a?.b.c.d = 1
-        ^^^^^^^^
-    SyntaxError: cannot assign to attribute here. Maybe you meant '==' instead of '='?
+>>> a?.b.c.d = 1
+File "<python-input-1>", line 1
+    a?.b.c.d = 1
+    ^^^^^^^^
+SyntaxError: cannot assign to attribute here. Maybe you meant '==' instead of '='?
+```
 
 This does not apply if the `None`-aware expressions is only part of a
 larger expression and evaluated on its own, for example as a function
 argument.
 
-    >>> a = None
-    >>> def f(a):
-    ...     return [a, 0]
-    ...
+``` py823-console
+>>> a = None
+>>> def f(a):
+...     return [a, 0]
+...
 
-    >>> f(a?.b)[1] = 1
+>>> f(a?.b)[1] = 1
+```
 
 ### Await expressions
 
@@ -480,12 +504,14 @@ their needs, especially code formatters might prefer a style which
 conforms better to their existing preferences. An example of what is
 possible:
 
-    def get_customer_name(data: Data) -> str | None:
-        return (
-            data.customer?
-                .user?
-                .name.lower()
-        )
+``` py823
+def get_customer_name(data: Data) -> str | None:
+    return (
+        data.customer?
+            .user?
+            .name.lower()
+    )
+```
 
 # Backwards Compatibility
 
@@ -622,11 +648,13 @@ behavior completely because it might be too difficult to understand.
 Developers should instead change any subsequent attribute access or
 subscript to their `None`-aware variants.
 
-    # before
-    a.b.optional?.c.d.e
+``` py823
+# before
+a.b.optional?.c.d.e
 
-    # after
-    a.b.optional?.c?.d?.e
+# after
+a.b.optional?.c?.d?.e
+```
 
 The idea has some of the same challenges as [Add a maybe
 keyword](#add-a-maybe-keyword). By forcing the use of `?.` or `?[ ]` for
@@ -650,17 +678,21 @@ instead of two new operators, it may also be **too general**, in a sense
 that it can be combine with any other operator. For example it is not
 clear what the following expressions would mean:
 
-    >>> x? + 1
-    >>> x? -= 1
-    >>> x? == 1
-    >>> ~x?
-    >>> [*x?]
+``` py823-console
+>>> x? + 1
+>>> x? -= 1
+>>> x? == 1
+>>> ~x?
+>>> [*x?]
+```
 
 Even if a default meaning of `is not None else None` is assumed, the
 expressions are likely to raise errors at some point.
 
-    >>> x? + 1
-    >>> (_t1 if ((_t1 := x) is not None) else None) + 1
+``` py823-console
+>>> x? + 1
+>>> (_t1 if ((_t1 := x) is not None) else None) + 1
+```
 
 This degree of generalization is not useful. The `None`-aware access
 operators where intentionally chosen to make it easier to access values
@@ -829,10 +861,12 @@ violates the substitution principle. An expression `(a?.b).c` should
 behave the same whether or not `a?.b` is written inline inside a group
 or defined as a separate variable.
 
-    (a?.b).c
+``` py823
+(a?.b).c
 
-    _t = a?.b
-    _t.c
+_t = a?.b
+_t.c
+```
 
 Furthermore, defining the short-circuiting behavior that way would have
 been a deviation from the already established behavior in languages like
@@ -976,8 +1010,10 @@ evaluates to `None`, the result will be `None` as well. Any subsequent
 attribute access, subscript or call will be skipped. In the example
 below, if `a.b` is `None`, so will be `a.b?.c`:
 
-    a.b?.c
-    ^^^
+``` py823
+a.b?.c
+^^^
+```
 
 On a technical level, removing short-circuiting would make it difficult
 to detect if `not-optional` attributes suddenly started to return `None`

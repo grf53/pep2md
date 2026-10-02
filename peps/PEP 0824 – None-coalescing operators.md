@@ -14,7 +14,7 @@ post_history:
 python_status: Draft
 url: https://peps.python.org/pep-0824/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0824.rst
-source_commit: 45f94657d3d2e609a80993b1ecd78c11551b3110
+source_commit: d0943b0bf6163220911b1e6777372c849202e654
 ---
 
 # Abstract
@@ -112,9 +112,11 @@ Using the \"`None`-coalescing\" operator `??` instead, helps to keep the
 expression short and predictable while still clearly communicating the
 intent.
 
-    def show_user_age(user: User):
-        age = user.age ?? "unknown"
-        print(f"The user age is {age}")
+``` py824
+def show_user_age(user: User):
+    age = user.age ?? "unknown"
+    print(f"The user age is {age}")
+```
 
 ## Overwrite `None` values
 
@@ -132,8 +134,10 @@ Using the \"`None`-coalesce assignment\" operator `??=` helps to avoid
 repeating the expression. Especially for more complex once, this will
 make it easier to read and write.
 
-    def fix_user_name(user: User):
-        user.name ??= "unknown"
+``` py824
+def fix_user_name(user: User):
+    user.name ??= "unknown"
+```
 
 ## Defaults for function arguments
 
@@ -152,9 +156,11 @@ def show_user_name(user: User | None):
 
 This could be rewritten as:
 
-    def show_user_name(user: User | None):
-        user ??= create_default_user()
-        print(f"The user name is {user.name}")
+``` py824
+def show_user_name(user: User | None):
+    user ??= create_default_user()
+    print(f"The user name is {user.name}")
+```
 
 # Specification
 
@@ -177,11 +183,13 @@ conditional expressions. Parentheses can be added as necessary to modify
 the precedence of individual expressions. A few examples of how implicit
 parentheses would be placed:
 
-    # x or y ?? 2
-    (x or y) ?? 2
+``` py824
+# x or y ?? 2
+(x or y) ?? 2
 
-    # "Hello" if x ?? True else 0
-    "Hello" if (x ?? True) else 0
+# "Hello" if x ?? True else 0
+"Hello" if (x ?? True) else 0
+```
 
 ### AST changes
 
@@ -299,30 +307,31 @@ is therefore merely meant as a suggestion.
 
 ### `None`-coalescing operator
 
-+---------------------------+---------------------+-----------------------+
-| Code                      | Pattern             | Example               |
-+===========================+=====================+=======================+
-|     user.age ?? "unknown" | \"\... or \... if   | \"user dot age `or`   |
-|                           | None\"              | unknown `if None`\"   |
-|                           +---------------------+-----------------------+
-|                           | \"\... coalesce     | \"user dot age        |
-|                           | with \...\"         | `coalesce with`       |
-|                           |                     | unknown\"             |
-+---------------------------+---------------------+-----------------------+
++-----------------------+---------------------+-----------------------+
+| Code                  | Pattern             | Example               |
++=======================+=====================+=======================+
+| ``` py824             | \"\... or \... if   | \"user dot age `or`   |
+| user.age ?? "unknown" | None\"              | unknown `if None`\"   |
+| ```                   |                     |                       |
+|                       +---------------------+-----------------------+
+|                       | \"\... coalesce     | \"user dot age        |
+|                       | with \...\"         | `coalesce with`       |
+|                       |                     | unknown\"             |
++-----------------------+---------------------+-----------------------+
 
 ### `None`-coalescing assignment operator
 
-+-----------------------------+---------------------+-------------------------+
-| Code                        | Pattern             | Example                 |
-+=============================+=====================+=========================+
-|     user.name ??= "unknown" | \"if \... is None,  | \"`if` user dot name    |
-|                             | assign \...\"       | `is None`, `assign`     |
-|                             |                     | unknown\"               |
-|                             +---------------------+-------------------------+
-|                             | \"assign \... to    | \"`assign` unknown `to` |
-|                             | \... if None\"      | user dot name           |
-|                             |                     | `if None`\"             |
-+-----------------------------+---------------------+-------------------------+
++-------------------------+---------------------+-------------------------+
+| Code                    | Pattern             | Example                 |
++=========================+=====================+=========================+
+| ``` py824               | \"if \... is None,  | \"`if` user dot name    |
+| user.name ??= "unknown" | assign \...\"       | `is None`, `assign`     |
+| ```                     |                     | unknown\"               |
+|                         +---------------------+-------------------------+
+|                         | \"assign \... to    | \"`assign` unknown `to` |
+|                         | \... if None\"      | user dot name           |
+|                         |                     | `if None`\"             |
++-------------------------+---------------------+-------------------------+
 
 # Reference Implementation
 
@@ -376,9 +385,11 @@ for that reason do not provide an immediate advantage. In contrast, the
 Lastly, using a (soft-) keyword for the \"`None`-coalescing assignment\"
 operator poses additional questions and readability concerns.
 
-    a = otherwise b
+``` py824
+a = otherwise b
 
-    a otherwise= b
+a otherwise= b
+```
 
 ## Add `??` as a binary operator
 

@@ -3,15 +3,15 @@ pep: 619
 title: Python 3.10 Release Schedule
 author:
 - Pablo Galindo Salgado <pablogsal@python.org>
-status: Active
+status: Final
 type: Informational
 topic: Release
 created: 25-May-2020
 python_version: '3.10'
-python_status: Active
+python_status: Final
 url: https://peps.python.org/pep-0619/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0619.rst
-source_commit: 5014379cf848cd026496d05278dfd54a4ff25085
+source_commit: faa547089bb2c73a99244597f5d0bd2c9d3aa925
 ---
 
 # Abstract
@@ -83,15 +83,21 @@ Provided irregularly on an \"as-needed\" basis until October 2026.
 - 3.10.19: Thursday, 2025-10-09
 - 3.10.20: Tuesday, 2026-03-03
 - 3.10.21: Wednesday, 2026-08-12
+- 3.10.22: Thursday, 2026-10-01
 
 ## 3.10 Lifespan
 
 3.10 received bugfix updates approximately every 2 months for
 approximately 18 months. Some time after the release of 3.11.0 final,
-the 11th and final 3.10 bugfix update was released. After that, it is
-expected that security updates (source only) will be released until 5
-years after the release of 3.10 final, so until approximately October
-2026.
+the 11th and final 3.10 bugfix update was released. After that, security
+updates (source only) were released until 1st October 2026, 5 years
+after the release of 3.10.0 final.
+
+As of 2026-10-01, 3.10 has reached the [end-of-life
+phase](https://devguide.python.org/developer-workflow/development-cycle/index.html#end-of-life-branches)
+of its release cycle. 3.10.22 was the final security release. The
+codebase for 3.10 is now frozen and no further updates will be provided
+nor issues of any kind will be accepted on the bug tracker.
 
 # Features for 3.10
 

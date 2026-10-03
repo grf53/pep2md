@@ -15,7 +15,7 @@ post_history:
 python_status: Draft
 url: https://peps.python.org/pep-0818/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0818.rst
-source_commit: d8411a04cc37a7bb62da3803b04f50c142eefd78
+source_commit: 525d8ec8cfa0210fe57603715ab3684d1190d406
 ---
 
 # Abstract
@@ -70,6 +70,15 @@ handle events, to access databases, etc. For instance, once Python has a
 JavaScript foreign function interface, it will be possible to support
 `urllib` on Emscripten. Downstream, supporting `urllib3`, `aiohttp`, and
 `httpx` requires the foreign function interface.
+
+The fact that the Pyodide foreign function interface is coupled to
+Pyodide creates problems for other Emscripten-CPython distributions. For
+instance, [Emscripten-forge]() is a project that provides conda recipes
+for the Emscripten platform. They have to reimplement the Pyodide
+foreign function interface in order to support downstream packages that
+use it. Their reimplementation is slower and has various minor
+incompatibilities. For this reason, the Emscripten-force maintainers
+strongly support adding Pyodide\'s interface to CPython.
 
 In order to keep the length of this PEP reasonable, we focus on the
 \"core\" of the foreign function interface. The JavaScript interface for

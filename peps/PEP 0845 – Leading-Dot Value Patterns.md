@@ -15,7 +15,7 @@ post_history:
 python_status: Draft
 url: https://peps.python.org/pep-0845/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0845.rst
-source_commit: c57ddedd0894baa7790224963468bafe60df7848
+source_commit: b4b0c9f3e1a41628506afc7a06d16753d7673a56
 ---
 
 # Abstract
@@ -121,6 +121,24 @@ workarounds like the guard clause.
 The value pattern will be extended to support simple names if they are
 prefixed by a leading dot. The lookup is performed following the
 standard Python name resolution rules.
+
+## Interaction with capture patterns
+
+**Capture patterns** are only assigned **after** a case matches but
+before the guard clause is evaluated. Any lookup will resolve to an
+existing variable if one exists, or raise an error.
+
+``` python-console
+>>> match [1, 1]:
+...     case [x, *_, .x]:
+...        pass
+...
+Traceback (most recent call last):
+File "<python-input-0>", line 2, in <module>
+    case [x, *_, .x]:
+                  ^
+NameError: name 'x' is not defined
+```
 
 ## Grammar
 
@@ -281,6 +299,19 @@ covers all of these scopes without additional syntax. In addition,
 `nonlocal.NAME` does not have an equivalent expression form elsewhere in
 Python.
 
+## Reuse existing typing constructs (`Literal[NAME]`)
+
+It was suggested to reuse `Literal` from
+`typing.Literal`{.interpreted-text role="py:class"} to match simple
+names. So far no names other than `_` have a dedicated meaning in the
+match statement mini-syntax. Assigning one to `Literal` would thus be
+surprising. Additionally, subscription is not defined for use in match
+cases yet. Using it here would limit future options unnecessarily.
+Lastly, `typing.Literal`{.interpreted-text role="py:class"} only
+supports literal values as arguments, e.g. `1`, `"Hello"` or `True`.
+Allowing simple names only inside match cases would therefore be
+confusing.
+
 ## Distinguishing by case of the name
 
 Treating `UPPER_CASE` names as constants was considered and rejected
@@ -345,6 +376,12 @@ match target_type:
 Note the difference from the class pattern `case int():`, which matches
 *instances* of `int`: the value pattern `case .int:` matches the type
 object itself.
+
+# Change History
+
+- 25-Sep-2026
+  - Clarify interaction with **capture patterns**
+  - Added rejected idea for `Literal[NAME]`
 
 # Copyright
 

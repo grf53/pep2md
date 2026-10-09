@@ -6,17 +6,33 @@ author:
 sponsor: Barry Warsaw <barry@python.org>
 pep_delegate: Dustin Ingram <di@python.org>
 discussions_to: https://discuss.python.org/t/63191
-status: Draft
+status: Withdrawn
 type: Process
 topic: Packaging
 created: 05-Sep-2024
 post_history:
 - '`07-Sep-2024 <https://discuss.python.org/t/63191>`__'
-python_status: Draft
+resolution: '`02-Oct-2026 <https://discuss.python.org/t/pep-755-implicit-namespace-policy-for-pypi/63191/79>`__'
+python_status: Withdrawn
 url: https://peps.python.org/pep-0755/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0755.rst
-source_commit: 3b3dbeb7be9c7edbb601d21da5d2e5776ee81dcd
+source_commit: f38faac78d55ac862a6f70f9be6e7c4320aa56b9
 ---
+
+::: withdrawn
+This PEP has been withdrawn. `752`{.interpreted-text role="pep"} defines
+the interoperability requirements that package repositories need in
+order to support namespaces; the process for applying for and reviewing
+namespace grants is an index-specific policy decision rather than an
+interoperability standard. PyPI\'s namespace policy will instead be
+published and maintained as PyPI policy by the PSF, with input from PyPI
+staff, the community, and, where it affects packaging interoperability,
+the Packaging Council. This leaves other package repositories free to
+set policies appropriate to them.
+
+In particular, PyPI does not prioritize review of applications from paid
+organizations and will not do so for namespace applications.
+:::
 
 # Abstract
 

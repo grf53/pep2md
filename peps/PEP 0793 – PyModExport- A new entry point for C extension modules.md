@@ -15,7 +15,7 @@ resolution: '`23-Oct-2025 <https://discuss.python.org/t/93444/46>`__'
 python_status: Final
 url: https://peps.python.org/pep-0793/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0793.rst
-source_commit: d0000fa76be193678f3d7c47b72dcd5b85d68c16
+source_commit: 8e5bed3645e7aec4d8ff3f2dfda92ab46582364e
 ---
 
 ::: canonical-doc
@@ -324,7 +324,7 @@ Modules created using the `PyModule_FromSlotsAndSpec` or the
 set the token.
 
 Modules created from a `PyModuleDef` will have the token set to that
-definition. An explicit `Py_mod_token` slot will we rejected for these.
+definition. An explicit `Py_mod_token` slot will be rejected for these.
 (This allows implementations to share storage for the token and def.)
 
 For modules created via the new export hook, the token will be set to

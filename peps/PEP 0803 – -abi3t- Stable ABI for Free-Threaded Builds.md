@@ -21,7 +21,7 @@ resolution: '`30-Mar-2026 <https://discuss.python.org/t/106181/26>`__'
 python_status: Final
 url: https://peps.python.org/pep-0803/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0803.rst
-source_commit: 36174632ec4f28cea59d340601373bf6b9198f24
+source_commit: c0db0957310e3a8e42236862764fe23e648588bd
 ---
 
 ::: canonical-doc
@@ -605,7 +605,7 @@ Put another way, `importlib.machinery.EXTENSION_SUFFIXES` will be (for
   `['.cpython-315-x86_64-linux-gnu.so', '.abi3t.so', '.so']`
 
 Making GIL-enabled builds load `.abi3t.so` files is purely a practical
-choice: it this one case we break the conceptual purity of `abi3` and
+choice: in this one case we break the conceptual purity of `abi3` and
 `abi3t` being separate ABIs.
 
 ### Recommendations for installers
@@ -615,7 +615,7 @@ builds wherever they currently allow `abi3`-tagged ones for (otherwise
 equal) non-free-threaded builds.
 
 Note that this PEP does not provide a way to target Stable ABI for
-Free-threaded Python 3.14 (`cp314-abi3t`) and below. This may change an
+Free-threaded Python 3.14 (`cp314-abi3t`) and below. This may change in
 the future, or with experimental build tools, so installers should be
 prepared for such extensions.
 

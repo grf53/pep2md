@@ -5,17 +5,19 @@ author:
 - Thomas Kehrenberg <tmke8@posteo.net>
 - Marc Mueller
 sponsor: Ethan Furman <ethan@stoneleaf.us>
-discussions_to: https://discuss.python.org/t/pep-845-leading-dot-value-patterns/109100
+discussions_to: https://discuss.python.org/t/pep-845-leading-dot-value-patterns-for-match-statement/109405
 status: Draft
 type: Standards Track
 created: 25-Aug-2026
 python_version: '3.16'
 post_history:
+- '`26-Jun-2026 <https://discuss.python.org/t/pattern-matching-on-constants-that-arent-in-a-namespace-especially-sentinels/107916>`__'
 - '`17-Sep-2026 <https://discuss.python.org/t/pep-845-leading-dot-value-patterns/109100>`__'
+- '`09-Oct-2026 <https://discuss.python.org/t/pep-845-leading-dot-value-patterns-for-match-statement/109405>`__'
 python_status: Draft
 url: https://peps.python.org/pep-0845/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0845.rst
-source_commit: b4b0c9f3e1a41628506afc7a06d16753d7673a56
+source_commit: aad6bc8e62392a0edbe73792d82a2af3e1d654ff
 ---
 
 # Abstract

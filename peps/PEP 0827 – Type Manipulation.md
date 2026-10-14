@@ -9,6 +9,8 @@ discussions_to: https://discuss.python.org/t/pep-827-type-manipulation/106353
 status: Draft
 type: Standards Track
 topic: Typing
+requires:
+- '849'
 created: 27-Feb-2026
 python_version: '3.16'
 post_history:
@@ -16,7 +18,7 @@ post_history:
 python_status: Draft
 url: https://peps.python.org/pep-0827/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0827.rst
-source_commit: bf3200325bfef7426c0ee2b8d93495bc5ddabb75
+source_commit: 0df2ebf9b0b55c18055ea408af4fbe0d9142958d
 ---
 
 # Abstract
@@ -1292,37 +1294,9 @@ More loosely speaking, though, the use of `if` and `for` in type
 annotations can cause trouble for tools that want to extract type
 annotations.
 
-Tools that want to fully evaluate the annotations will need to either
-implement an evaluator or use a library for it (the PEP authors are
-planning to produce such a library).
-
-Tools that specifically rely on introspecting annotations at runtime
-(tools that parse Python files are obviously unaffected) that want to
-extract the annotations unevaluated and process them in some way are
-possibly in more trouble. Currently, this is doable if
-`from __future__ import annotations` is specified, because the string
-annotation could be parsed with `ast.parse` and then handled in
-arbitrary ways.
-
-Absent that, as things currently stand, things get trickier, since there
-is currently no way to get useful info out of the `__annotate__`
-functions without running the annotation, and its tricks for building a
-string do not work for loops and conditionals.
-
-This could be mitigated by doing one of:
-
-:   1.  The
-        `"Just store the strings" <649#just-store-the-strings>`{.interpreted-text
-        role="pep"} option from `649`{.interpreted-text role="pep"},
-        which would allow always extracting unevaluated strings.
-    2.  Adding a `Format.AST` mode for fetching annotations (see this
-        [PEP
-        draft](https://imogenbits-peps.readthedocs.io/en/ast_format/pep-9999/))
-
-If neither of those options is taken, then tools that want to process
-unevaluated type manipulation expressions will probably need to reparse
-the source code and extract annotations from there. Which we expect is
-what most tools do anyway.
+To address this, we depend on `849`{.interpreted-text role="pep"} (or
+something essentially isomorphic to it), which will allow retrieving the
+AST (or string) representation of arbitrary annotations.
 
 # Security Implications
 

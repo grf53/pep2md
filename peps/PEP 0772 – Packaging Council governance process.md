@@ -16,12 +16,11 @@ post_history:
 - '`25-Jul-2025 <https://discuss.python.org/t/pep-772-packaging-council-governance-process-round-3/100181>`__'
 - '`23-Mar-2026 <https://discuss.python.org/t/pep-772-packaging-council-governance-process-round-3/100181/108>`__'
 - '`14-Apr-2026 <https://discuss.python.org/t/pep-772-packaging-council-governance-process-round-3/100181/117>`__'
-replaces: '609'
 resolution: '`16-Apr-2026 <https://discuss.python.org/t/pep-772-packaging-council-governance-process-round-3/100181/118>`__'
 python_status: Accepted
 url: https://peps.python.org/pep-0772/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0772.rst
-source_commit: 4f15a718c1de09ea61f8a5c0248f433287fb9ee9
+source_commit: be6b0dc5e7a7992433d33406c6950eda1a2951f7
 ---
 
 # Abstract

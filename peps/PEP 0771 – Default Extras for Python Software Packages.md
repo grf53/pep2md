@@ -17,7 +17,7 @@ post_history:
 python_status: Draft
 url: https://peps.python.org/pep-0771/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0771.rst
-source_commit: 83ab8608ddaa8690ae19dce9fdc286144b187f27
+source_commit: 2fc4ffd55aeabe5d788d0e8dcc422322ea5dde78
 ---
 
 # Abstract
@@ -27,12 +27,14 @@ declaring package dependencies. One feature of this language is the
 ability to specify *extras*, which are optional components of a
 distribution that, when used, install additional dependencies. This PEP
 proposes a mechanism to allow one or more extras to be installed by
-default if none are provided explicitly.
+default if none are provided explicitly, and specifies that an empty set
+of extras (`package[]`) requests a minimal installation without any
+default extras.
 
 # Motivation
 
 Various use cases for default extras and possible solutions in this PEP
-were discussed extensively on [this DPO
+were discussed extensively on [this discuss.python.org
 thread](https://discuss.python.org/t/adding-a-default-extra-require-environment/4898).
 These fall into two broad cases that provide the motivation for the
 present PEP.
@@ -46,16 +48,16 @@ required and which should be categorized as extras. A balance must be
 struck between the needs of typical users, who may prefer most features
 to be available by default, and users who want minimal installations
 without large, optional dependencies. One solution with existing Python
-packaging infrastructure is for package maintainers to define an extra
-called, for example, `recommended`, which includes all non-essential but
-suggested dependencies. Users are then instructed to install the package
-using `package[recommended]`, while those who prefer more control can
-use `package`. However, in practice, many users are unaware of the
-`[recommended]` syntax, placing the burden on them to know this for a
-typical installation. Having a way to have recommended dependencies be
-installed by default while providing a way for users to request a more
-minimal installation would satisfy this use case, and this PEP describes
-a solution to this.
+packaging infrastructure is for package maintainers to define an extra,
+for example one called `recommended`, which includes all non-essential
+but suggested dependencies. Users are then instructed to install the
+package using `package[recommended]`, while those who prefer more
+control can use `package`. However, in practice, many users are unaware
+of the `[recommended]` syntax, placing the burden on them to know this
+for a typical installation. Having a way to have recommended
+dependencies be installed by default while providing a way for users to
+request a more minimal installation would satisfy this use case, and
+this PEP describes a solution to this.
 
 Examples of packages that demonstrate this pattern by encouraging users
 to include extra dependencies by default include:
@@ -111,7 +113,7 @@ some of these packages.
 # Rationale
 
 A number of possible solutions have been discussed extensively by the
-community for several years, including in [this DPO
+community for several years, including in [this discuss.python.org
 thread](https://discuss.python.org/t/adding-a-default-extra-require-environment/4898)
 as well as in numerous issues and pull requests. The solution that is
 presented below:
@@ -124,6 +126,23 @@ presented below:
 
 It is the only solution, out of all those discussed, that meets all
 three criteria.
+
+An alternative approach using existing infrastructure \-- splitting a
+package into a core package and a meta-package (discussed in detail in
+[Using a meta-package for recommended
+installations](#using-a-meta-package-for-recommended-installations)) \--
+can technically achieve similar outcomes but imposes a significant and
+ongoing maintenance burden, introduces user-facing issues such as naming
+mismatches and unintuitive uninstallation behavior, and has proven
+impractical enough that many projects have chosen not to adopt it.
+
+The concept of default-but-optional dependencies has prior art in other
+ecosystems. Linux distributions such as Debian/Ubuntu and Fedora have
+long distinguished between required (`Depends`) and recommended
+(`Recommends`) dependencies, where recommended packages are installed by
+default but can be excluded. The Rust/Cargo ecosystem has had [default
+features](https://doc.rust-lang.org/cargo/reference/features.html#the-default-feature)
+for over 10 years, which are widely used.
 
 # Specification
 
@@ -138,11 +157,15 @@ extras being specified explicitly.
 
 Only entries already specified in a
 [Provides-Extra](https://packaging.python.org/en/latest/specifications/core-metadata/#provides-extra-multiple-use)
-entry can be used in a `Default-Extra` entry.
+entry can be used in a `Default-Extra` entry. Each entry must be
+normalized following the same rules as `Provides-Extra` (see
+`685`{.interpreted-text role="pep"}) and must match the corresponding
+`Provides-Extra` entry exactly.
 
 Examples:
 
     Default-Extra: recommended
+
     Default-Extra: backend1
     Default-Extra: backend2
     Default-Extra: backend3
@@ -150,7 +173,7 @@ Examples:
 Since this introduces a new field in the core package metadata, this
 will require
 [Metadata-Version](https://packaging.python.org/en/latest/specifications/core-metadata/#metadata-version)
-to be bumped to the next minor version (2.5 at the time of writing).
+to be bumped to the next minor version (2.7 at the time of writing).
 
 ## New key in `[project]` metadata table
 
@@ -158,23 +181,24 @@ A new key will be added to the `[project]` table in project metadata as
 originally defined in `621`{.interpreted-text role="pep"} and now
 defined in the [PyPA
 specifications](https://packaging.python.org/en/latest/specifications/pyproject-toml/).
-This key will be named `default-optional-dependency-keys` with the
+This key will be named `default-optional-dependencies` with the
 following description:
 
 - [TOML](https://toml.io/) type: Array of strings
 - Corresponding core metadata field: `Default-Extra`
 
-Each string in `default-optional-dependency-keys` must be the name of an
+Each string in `default-optional-dependencies` must be the name of an
 extra defined in
 [optional-dependencies](https://packaging.python.org/en/latest/specifications/pyproject-toml/#dependencies-optional-dependencies),
 and each extra in this array will be converted to a matching
-`Default-Extra` entry in the core package metadata. Examples of valid
-usage which would produce the example `Default-Extra` entries presented
-in the previous section are:
+`Default-Extra` entry in the core package metadata. Build backends must
+raise an error if any of the strings do not match the name of a defined
+extra. Examples of valid usage which would produce the example
+`Default-Extra` entries presented in the previous section are:
 
 ``` toml
 [project]
-default-optional-dependency-keys = [
+default-optional-dependencies = [
     "recommended",
 ]
 ```
@@ -183,17 +207,32 @@ and:
 
 ``` toml
 [project]
-default-optional-dependency-keys = [
+default-optional-dependencies = [
     "backend1",
     "backend2",
     "backend3"
 ]
 ```
 
+As with other keys in the `[project]` table,
+`default-optional-dependencies` may be listed in `dynamic`, in which
+case the build backend is responsible for determining the default
+extras. Since its value is an array, it may also be specified statically
+and listed in `dynamic` simultaneously, following the rules for
+list-valued keys in the [pyproject.toml
+specification](https://packaging.python.org/en/latest/specifications/pyproject-toml/#dynamic).
+In all cases the entries must be validated against the final set of
+extras produced by the build backend, including when
+`optional-dependencies` is itself dynamic. Correspondingly,
+`Default-Extra` may be listed in the `Dynamic` field of a source
+distribution\'s core metadata.
+
 ## Overriding default extras
 
 If extras are explicitly given in a dependency specification, the
-default extras are ignored. Otherwise, the default extras are installed.
+default extras must be ignored. If a package is specified *bare*, that
+is with no extras and no brackets at all, the default extras must be
+installed.
 
 For example, if a package defines an `extra1` default extra as well as a
 non-default `extra2` extra, then if a user were to install the package
@@ -203,8 +242,8 @@ with:
 $ pip install package
 ```
 
-the default `extra1` dependency would be included. If the user instead
-installs the package with:
+the dependencies of the default `extra1` extra would be included. If the
+user instead installs the package with:
 
 ``` console
 $ pip install package[extra2]
@@ -215,30 +254,58 @@ extra would be ignored.
 
 If the same package is specified multiple times in an installation
 command or dependency tree, the default extras must be installed if any
-of the instances of the package are specified without extras. For
-instance, if one installs a package `spam` where `package` appears
-several times in the dependency tree:
+of the instances of the package are specified bare. For instance,
+consider installing `spam`, whose dependency tree contains `package`
+several times:
 
     spam
     ├── tomato
-    │   ├── package[extra2]
+    │   └── package[extra2]
     └── egg
         └── package
 
-then the default extra should be installed because `package` appears at
-least once with no extras specified.
+then the default extra must be installed because `package` appears at
+least once bare.
 
-An empty set of extras, such as `package[]` should be interpreted as
-meaning that the package should be installed *without* any default
-extras (unless `package` appears elsewhere in the dependency tree, in
-which case, the default extra *would* be installed as mentioned above).
-This would provide a universal way of obtaining a minimal installation
-of a package.
+An empty set of extras, such as `package[]`, must be interpreted as a
+request to install the package *without* any default extras. `package[]`
+neither triggers nor prevents the installation of default extras: the
+default extras are installed only if `package` also appears bare
+elsewhere in the dependency tree, as described above. For example, a
+dependency tree containing only `package[]` and `package[extra2]`
+results in `extra2` being installed but no default extras, since no
+instance of `package` is bare. `package[]` therefore provides a
+standardized way of obtaining a minimal installation of a package.
+
+If a package is already installed without its default extras (for
+example, because it was pulled in as a dependency via `package[]`), and
+a user subsequently runs `pip install package` (or equivalent), the
+installer must ensure that the default extras\' dependencies are
+installed. In other words, a bare `package` specification must always be
+treated as requesting the package with its default extras, regardless of
+whether the package is already present in the environment.
+
+Conversely, this PEP does not introduce any mechanism for removing
+packages. If a package was installed with its default extras, or with an
+explicitly specified extra, and is subsequently installed with a
+different set of extras, the dependencies that are no longer requested
+are not uninstalled. This is consistent with how extras behave today.
+
+When multiple packages in a dependency tree define default extras, the
+above rules apply independently to each package. For example, consider
+two packages `flask` and `werkzeug` that both define default extras. If
+`flask` lists `werkzeug[]` in its required dependencies and `werkzeug`
+(without `[]`) in a default extra, then installing `flask` would include
+`werkzeug` with its own default extras (because the default extra causes
+`werkzeug` to appear bare), while installing `flask[]` would include
+only `werkzeug[]` (no default extras for either package). This follows
+from the rules above and requires no special handling of nested default
+extras.
 
 We also note that some tools such as
 [pip](https://github.com/wheel-next/pip/tree/pep_771) currently ignore
 unrecognized extras, and emit a warning to the user to indicate that the
-extra has not been recognized, e.g:
+extra has not been recognized, e.g.:
 
 ``` console
 $ pip install package[non-existent-extra]
@@ -259,7 +326,20 @@ control the above behavior, for example implementing an option that
 disables default extras for some or all packages regardless of where
 these packages appear in the dependency tree. If such tool-specific
 options are implemented, tool developers should make these opt-in, and
-users should experience the above PEP 771 behavior as default.
+users should experience the above PEP 771 behavior as the default.
+
+Default extras do not change how dependencies within extras interact
+with platform compatibility. If a default extra includes a dependency
+that is only available on certain platforms, the dependency should use
+[environment
+markers](https://packaging.python.org/en/latest/specifications/dependency-specifiers/#environment-markers)
+as with any other dependency, e.g.:
+
+    Requires-Dist: windows-only-package ; sys_platform == "win32"
+
+The behavior of the installer when a dependency within a default extra
+cannot be satisfied on the current platform is the same as for any other
+extra.
 
 ## Examples
 
@@ -279,7 +359,7 @@ and would choose to have this be included as a default extra:
 
 ``` toml
 [project]
-default-optional-dependency-keys = [
+default-optional-dependencies = [
     "recommended"
 ]
 
@@ -295,16 +375,15 @@ then get the equivalent of `package[recommended]`. Users could
 alternatively install `package[]` which would install the package
 without the default extras.
 
-To take a one of the concrete examples of package from the
-[Motivation](#motivation) section, the
-[astropy](https://www.astropy.org/) package defines a `recommended`
-extra that users are currently instructed to install in the default
-installation instructions. With this PEP, the `recommended` extra could
-be declared as being a default extra:
+To take one of the concrete examples from the [Motivation](#motivation)
+section, the [astropy](https://www.astropy.org/) package defines a
+`recommended` extra that users are currently instructed to install in
+the default installation instructions. With this PEP, the `recommended`
+extra could be declared as being a default extra:
 
 ``` toml
 [project]
-default-optional-dependency-keys = [
+default-optional-dependencies = [
     "recommended"
 ]
 
@@ -345,7 +424,7 @@ extra for each backend or frontend, and provide a default, e.g.:
 
 ``` toml
 [project]
-default-optional-dependency-keys = [
+default-optional-dependencies = [
     "backend1"
 ]
 
@@ -378,7 +457,7 @@ following configuration:
 
 ``` toml
 [project]
-default-optional-dependency-keys = [
+default-optional-dependencies = [
     "pyqt5"
 ]
 
@@ -417,7 +496,7 @@ $ pip install napari[pyside6]
 ### Supporting extras that should not remove default extras
 
 An additional case we consider here is where a package maintainer wants
-to support the ability for users to opt-in to non-default extras,
+to support the ability for users to opt in to non-default extras,
 without removing default extras. Essentially, they might want:
 
 - `package[]` to give an installation without any extras
@@ -429,11 +508,11 @@ without removing default extras. Essentially, they might want:
 - `package[additional]` to install both recommended and additional
   dependencies (in an `additional` extra)
 
-This could be achieved with e.g:
+This could be achieved with e.g.:
 
 ``` toml
 [project]
-default-optional-dependency-keys = [
+default-optional-dependencies = [
     "recommended"
 ]
 
@@ -468,7 +547,7 @@ this case:
 
 ``` toml
 [project]
-default-optional-dependency-keys = [
+default-optional-dependencies = [
     "recommended"
 ]
 
@@ -524,10 +603,10 @@ complexity.
 Maintainers should instead for now document that if a backend or
 frontend is explicitly specified, both backend and frontend need to be
 specified. Discoverability for users who want to do this should not be
-an issue however since users need to read the documentation in any case
-to find out what backends or frontends are available, so they can be
-shown at the same time how to properly use the extras for backends and
-frontends.
+an issue, however, since users need to read the documentation in any
+case to find out what backends or frontends are available, so they can
+be shown at the same time how to properly use the extras for backends
+and frontends.
 
 One option to increase user friendliness is that maintainers can create
 extras called for example `defaultbackend` and `defaultfrontend` which
@@ -545,12 +624,88 @@ $ pip install package[backend1, frontend2]  # installs backend1 and frontend2
 This would allow (if desired) users to then get whatever the recommended
 backend is, even if that default changes in time.
 
-If there is a desire to implement a better solution in future, we
-believe this PEP should not preclude this. For example, one could
-imagine in future adding the ability for an extra to specify *which*
-default extras it disables, and if this is not specified then explicitly
-specified extras would disable all default extras (consistent with the
-present PEP).
+This limitation \-- the inability to deselect individual defaults while
+keeping others \-- is shared by Cargo\'s default features in the Rust
+ecosystem, where the only option is all-or-nothing via
+`default-features = false`. If there is a desire to implement a better
+solution in the future, we believe this PEP should not preclude this.
+For example, one could imagine in the future adding the ability for an
+extra to specify *which* default extras it disables, and if this is not
+specified then explicitly specified extras would disable all default
+extras (consistent with the present PEP).
+
+### Depending on packages with default extras
+
+The examples above focus on packages that *define* default extras. It is
+also useful to illustrate how downstream packages can *depend on*
+packages with default extras in their `pyproject.toml`. The following
+examples assume that `astropy` has defined `recommended` as a default
+extra.
+
+A downstream package that is happy with the default extras needs no
+special syntax:
+
+``` toml
+[project]
+dependencies = [
+    "astropy>=6.0",
+]
+```
+
+A downstream library that wants only the minimal dependencies can use
+`package[]`:
+
+``` toml
+[project]
+dependencies = [
+    "astropy[]>=6.0",
+]
+```
+
+This syntax is backward-compatible: for versions of `astropy` that
+pre-date the introduction of default extras, `astropy[]` is equivalent
+to `astropy`.
+
+A downstream package can also request specific extras, which will
+override the defaults:
+
+``` toml
+[project]
+dependencies = [
+    "astropy[jupyter]>=6.0",
+]
+```
+
+The same dependency specifiers can be used anywhere
+`508`{.interpreted-text role="pep"} strings are accepted, and the rules
+in [Overriding default extras](#overriding-default-extras) apply
+identically. For example, in `723`{.interpreted-text role="pep"} inline
+script metadata:
+
+``` python
+# /// script
+# dependencies = [
+#     "astropy[]>=6.0",
+# ]
+# ///
+```
+
+or in `735`{.interpreted-text role="pep"} dependency groups:
+
+``` toml
+[dependency-groups]
+docs = [
+    "astropy",
+]
+minimal-tests = [
+    "astropy[]",
+]
+```
+
+In all of these cases, `astropy` requests the default extras and
+`astropy[]` does not, regardless of whether the specifier appears in a
+project\'s dependencies, a script, a dependency group, a requirements
+file, or on the command line.
 
 # Backward Compatibility
 
@@ -568,23 +723,46 @@ PEP, but those packages will remain installable with older packaging
 tools \-- with the main difference being that the default extras will
 not be installed automatically when older packaging tools are used.
 
-As described in [How to teach this](#how-to-teach-this), package authors
-need to carefully evaluate when and how they adopt the default extra
-feature depending on their user base, as some actions (such as moving a
-required dependency to a default extra) will likely result in breakage
-for users if a significant fraction of them are still using older
-package installers that do not support default extras. In this sense,
-package authors should be aware that this feature, if used in certain
-ways, can cause backward-compatibility issues for users, and they are
-thus responsible for ensuring that they minimize the impact to users.
+As described in [Supporting older versions of package
+installers](#supporting-older-versions-of-package-installers), package
+authors need to carefully evaluate when and how they adopt default
+extras depending on their user base, since some actions, such as moving
+a required dependency to a default extra, will result in breakage for
+users of older installers. Authors are thus responsible for minimizing
+the impact on their users.
+
+## Change in meaning of a bare package name
+
+This PEP changes the meaning of a bare package name (e.g. `package`
+without any extras) for packages that define default extras: prior to
+this PEP, installing `package` would install only the dependencies
+listed in `dependencies`, whereas with this PEP it may additionally
+install the dependencies associated with default extras.
+
+It is worth noting, however, that in practice the dependencies listed in
+`dependencies` have never strictly represented a minimal set. Package
+authors have always had full discretion over what to include in
+`dependencies`, and many packages include dependencies in `dependencies`
+that are not strictly required for core functionality but are considered
+important for a good default experience. There is currently no mechanism
+for users or downstream packages to opt out of such dependencies. This
+PEP provides a way for authors to separate truly required dependencies
+from recommended-but-optional ones, and introduces `package[]` as a
+standardized way to obtain a minimal installation \-- something that
+does not exist today.
+
+This PEP is also opt-in: no existing package changes behavior until its
+maintainer explicitly adds default extras, which is no different in
+nature from other metadata changes authors routinely make, such as
+adding or removing required dependencies.
 
 ## Packaging-related tools
 
 The most significant backward-compatibility aspect is related to
 assumptions packaging tools make about extras \-- specifically, this PEP
-changes the assumption that extras are no longer exclusively additive in
-terms of adding dependencies to the dependency tree, and specifying some
-extras can result in fewer dependencies being installed.
+changes the assumption that extras are exclusively additive in terms of
+adding dependencies to the dependency tree: with default extras,
+specifying some extras can result in fewer dependencies being installed.
 
 A specific example of change in behavior can be seen with
 [pip](https://github.com/wheel-next/pip/tree/pep_771): consider a
@@ -617,17 +795,31 @@ is to illustrate that there may be changes in behavior in packaging
 tools due to the change in the assumption about what impact an extra can
 have.
 
-It is worth noting that the recently-accepted `751`{.interpreted-text
-role="pep"} defines a new file format which is intended to replace
-alternatives such as the `pip freeze` output and other tools in future.
-The new file format is designed so that the packages in the file are
-installed *without* resolving dependencies, which means that it will be
-fully compatible with default extras as specified in this PEP, and will
-avoid the issue with `pip freeze`/`pip install -r` mentioned above.
+It is worth noting that `751`{.interpreted-text role="pep"} (accepted in
+2025) defines a new file format which is intended to replace
+alternatives such as the `pip freeze` output and other tools in the
+future. The new file format is designed so that the packages in the file
+are installed *without* resolving dependencies, which means that it will
+be fully compatible with default extras as specified in this PEP, and
+will avoid the issue with `pip freeze`/`pip install -r` mentioned above.
+
+Beyond installers, other tools that rely on dependency metadata \-- such
+as dependency update services, security scanners, and package indexes
+that display dependency information \-- will also need to be updated to
+take `Default-Extra` into account in order to accurately reflect what a
+bare installation of a package will include. Until they are, such tools
+may under-report the dependencies of packages that define default
+extras.
 
 # Security Implications
 
-There are no known security implications for this PEP.
+As noted in [Packaging-related tools](#packaging-related-tools), tools
+that audit dependencies for security purposes will need to take
+`Default-Extra` into account to accurately report what will be
+installed. Beyond this, this PEP introduces no security risks that do
+not already exist with required dependencies, since package authors can
+already cause arbitrary additional packages to be installed by listing
+them as required dependencies.
 
 # How to teach this
 
@@ -649,7 +841,7 @@ Package users should be provided with clear installation instructions
 that show what extras are available for packages and how they behave,
 for example explaining that by default some recommended dependencies or
 a given frontend or backend will be installed, and how to opt out of
-this or override defaults, depending what is available.
+this or override defaults, depending on what is available.
 
 ## Package authors
 
@@ -670,29 +862,30 @@ recommendations would apply:
 
 - Moving a package from being a required dependency to a default extra
   would be a breaking change, because older versions of package
-  installers would not recognise the concept of default extras, and
+  installers would not recognize the concept of default extras, and
   would then install the package with fewer dependencies, which could
   affect users that would have been relying on these. Therefore,
   changing dependencies from required to a default extra in an
-  established package should only be done in future once the developers
-  only want to support users with installers that implement this PEP.
+  established package should only be done in the future once the
+  developers only want to support users with installers that implement
+  this PEP.
 - Making an existing extra become a default should be safer, such as
   making `recommended` in [astropy](https://www.astropy.org/) be a
   default extra, but in order to support users with older versions of
   package installers, the documentation should still mention the extra
   explicitly as long as possible (until it is clear that most/all users
   are using package installers that implement this PEP). There is no
-  downside to keeping the extra be explicitly mentioned, but this will
+  downside to keeping the extra explicitly mentioned, but this will
   ensure that users with modern tooling who do not read documentation
   (which may be a non-negligible fraction of the user community) will
   start getting the recommended dependencies by default.
 - Since prior to this PEP, `package[]` was equivalent to `package`,
   authors will be able to document `package[]` as a backward-compatible
-  universal way of getting a minimal installation. For packages that
-  define default extras, installing `package[]` will always give a
-  minimal installation even with older versions of packaging tools such
-  as [pip](https://github.com/wheel-next/pip/tree/pep_771), and releases
-  of this package that pre-date the introduction of default extras for a
+  way of getting a minimal installation. For packages that define
+  default extras, installing `package[]` will always give a minimal
+  installation even with older versions of packaging tools such as
+  [pip](https://github.com/wheel-next/pip/tree/pep_771), and releases of
+  this package that pre-date the introduction of default extras for a
   specific package will also be installable with `package[]` (although
   in these cases this will be equivalent to `package`). For packages
   that do not define default extras, `package[]` will continue to be
@@ -701,12 +894,22 @@ recommendations would apply:
 ### Avoiding the addition of many default dependencies
 
 One temptation for authors might be to include many dependencies by
-default since they can provide a way to opt out from these. We recommend
-however that authors carefully consider what is included by default to
-avoid unnecessarily bloating installations and complicating dependency
-trees. Using default extras does not mean that all extras need to be
-defaults, and there is still scope for users to explicitly opt in to
-non-default extras.
+default since they can provide a way to opt out from these. We
+recommend, however, that authors carefully consider what is included by
+default to avoid unnecessarily bloating installations and complicating
+dependency trees. Using default extras does not mean that all extras
+need to be defaults, and there is still scope for users to explicitly
+opt in to non-default extras.
+
+As a guideline, a default extra should contain dependencies that the
+majority of users would need or expect when installing the package. Good
+candidates include dependencies that are required for the primary
+documented use case of the package (such as a default backend or
+frontend), or dependencies that are needed for core functionality that
+most users rely on but that some downstream consumers or advanced users
+may wish to exclude. Dependencies that serve niche use cases, add
+significant installation size, or are only relevant to a subset of users
+should remain as non-default extras.
 
 Default extras should generally be treated with the same \"weight\" as
 required dependencies. When a package is widely used, introducing a
@@ -717,9 +920,98 @@ explicitly opt out using minimal installation specifications.
 As an example, the [pytest](https://docs.pytest.org/) package currently
 has nearly 1,500 plugins that depend on it. If pytest were to add a
 default extra and those plugins were not updated accordingly, installing
-a plugin would include the default extras\' dependencies. This doesn't
+a plugin would include the default extras\' dependencies. This doesn\'t
 preclude the use of default extras, but addition of default extras
 requires careful evaluation of its downstream effects.
+
+As discussed in [Change in meaning of a bare package
+name](#change-in-meaning-of-a-bare-package-name), this is analogous to
+what already happens when a widely-used package adds a new required
+dependency, with the difference that downstream packages can opt out of
+default extras using `package[]`.
+
+In this regard, the mechanism proposed in this PEP differs from the
+`Recommends` feature in Linux distributions such as Debian/Ubuntu and
+Fedora. In those systems, a package cannot opt out of the `Recommends`
+of its own dependencies, so recommended dependencies accumulate
+throughout the dependency tree with no way for intermediate packages to
+limit this. The only opt-out is a global one applied by the end user,
+such as `--no-install-recommends`, which disables all recommendations at
+once. With this PEP, any package in the dependency tree can opt out of
+specific upstream default extras on a per-package basis using
+`package[]`, which limits the compounding effect.
+
+### Impact on downstream packages
+
+When a dependency adopts default extras, downstream packages that depend
+on it will receive additional dependencies. Authors of downstream
+packages should be aware of this possibility and can respond in several
+ways:
+
+- If the additional dependencies are acceptable, no action is needed.
+- If a minimal dependency footprint is desired, the downstream package
+  can depend on `package[]` to receive only the required dependencies
+  (this is backward-compatible, as described in [Supporting older
+  versions of package
+  installers](#supporting-older-versions-of-package-installers)).
+- If specific extras are needed, the downstream package can depend on
+  `package[specific-extra]`, which as with any explicitly specified
+  extra will override the default extras.
+
+Downstream packages that define their own extras may also need to
+consider how those extras interact with upstream default extras. For
+instance, if a downstream package offers both a `full` and `minimal`
+extra, the author will need to decide whether the `minimal` extra should
+depend on `upstream-package[]` and the `full` extra on
+`upstream-package`, or whether both should use the same form. This is a
+new consideration introduced by this PEP, but is similar in nature to
+decisions downstream authors already make when upstream packages add or
+reorganize their own extras.
+
+Note that if different downstream packages make different choices \--
+for example, one depending on `upstream[]` and another on `upstream` \--
+the default extras will be installed if any instance of the package
+appears without extras in the dependency tree (as described in
+[Overriding default extras](#overriding-default-extras)). This is
+consistent with the existing union semantics for extras: `upstream[]`
+should be read as \"I do not need the defaults\" rather than \"I forbid
+the defaults.\"
+
+For the same reason, downstream authors should not add `[]` to every
+dependency defensively. Depending on `upstream[]` is a statement that
+the downstream package does not rely on any functionality provided by
+the default extras. If `upstream` later moves functionality that the
+downstream package uses from its required dependencies into a default
+extra, a downstream package depending on `upstream[]` would break, while
+one depending on `upstream` would continue to work. `[]` should
+therefore be used deliberately, where a minimal footprint is genuinely
+needed and the downstream package has been verified to work without the
+default extras.
+
+### Default extras are not a substitute for good package design
+
+A concern that has been raised during the discussion of this PEP is that
+default extras might discourage authors from properly structuring their
+code into well-scoped packages \-- for example, by using a default extra
+to bundle unrelated functionality together rather than distributing it
+as a separate package.
+
+Default extras are not intended to replace good package design. They are
+a mechanism for expressing the author\'s intent about what a typical
+installation should include, in cases where the boundary between
+\"required\" and \"optional\" is genuinely ambiguous. A package whose
+components are truly independent and have distinct user bases would
+still be better served by being split into separate packages. Default
+extras are most appropriate when a package is conceptually one thing but
+has optional components that most users want \-- such as recommended
+performance or convenience dependencies, or a default backend for a
+package that supports multiple backends.
+
+The alternative approach of splitting packages into a core package and a
+meta-package is discussed in detail in [Using a meta-package for
+recommended
+installations](#using-a-meta-package-for-recommended-installations),
+along with the reasons it is not considered a compelling alternative.
 
 ### Inheriting from default extras
 
@@ -745,10 +1037,10 @@ feature for any extra that contains a dependency that could be
 incompatible with another.
 
 Consider a package that has extras `package[A]` and `package[B]`. Users
-could already currently try and install `package[A]` and `package[B]` or
+can already try to install `package[A]` and `package[B]` or
 `package[A,B]` which would result in a broken installation, however it
 would at least be explicit that both extras were being installed. Making
-`A` into a default extra however could lead to unintuitive issues. A
+`A` into a default extra, however, could lead to unintuitive issues. A
 user could do:
 
 ``` console
@@ -808,50 +1100,70 @@ to be used. \'Best practices\' documentation should mention:
   backends *and* frontends (as described in [Packages with multiple
   kinds of defaults](#packages-with-multiple-kinds-of-defaults))
 
+It is also recommended that packages using default extras include a
+continuous integration (CI) job that performs a minimal installation
+(without default extras) and verifies that core functionality still
+works. This helps ensure that the package does not accidentally rely on
+default extra dependencies for functionality that should be available in
+a minimal installation.
+
 ## Packaging repository maintainers
 
 The impact on individuals who repackage Python libraries for different
 distributions, such as [conda](https://docs.conda.io),
-[Homebrew](https://brew.sh/), linux package installers (such as `apt`
-and `yum`) and so on, needs to be considered. Not all package
-distributions have mechanisms that would line up with the approach
-described. In fact, some distributions such as conda, do not even have
-the concept of extras.
+[Homebrew](https://brew.sh/), Linux package installers (such as `apt`
+and `dnf`) and so on, needs to be considered. Not all package
+distributions have historically had mechanisms that would line up with
+the approach described, although this is evolving (for example, conda
+has recently added support for optional dependencies via [CEP
+44](https://conda.org/learn/ceps/cep-0044)).
 
 There are two cases to consider here:
 
 - In cases where the repackaging is done by hand, such as for a number
-  of conda-forge recipes, and especially where there is no equivalent to
-  extras, the introduction of default extras should not have a large
-  impact since manual decisions already have to be made as to which
-  dependencies to include (for example, the conda-forge recipe for the
-  [astropy](https://www.astropy.org/) package mentioned in the
+  of conda-forge recipes, the introduction of default extras should not
+  have a large impact since manual decisions already have to be made as
+  to which dependencies to include (for example, the conda-forge recipe
+  for the [astropy](https://www.astropy.org/) package mentioned in the
   [Motivation](#motivation) includes all the `recommended` dependencies
-  by default since there is no way for users to explicitly request them
-  otherwise).
-- In cases where the repackaging is done in an automated, way,
+  by default).
+- In cases where the repackaging is done in an automated way,
   distribution maintainers will need to carefully consider how to treat
   default extras, and this may imply a non-negligible amount of work and
   discussion.
 
-It is impossible for a PEP such as this to exhaustively consider each of
-the different package distributions. However, ultimately, default extras
-should be understood as how package authors would like their package to
-be installed for the majority of users, and this should inform decisions
-about how default extras should be handled, whether manually or
-automatically.
+While repackaging projects that use default extras requires decisions
+about how to map them, this does not make repackaging impossible.
+Repackagers already routinely handle concepts that have no direct
+equivalent in their target system \-- for example, until recently extras
+had no equivalent in conda, yet conda-forge has successfully packaged
+thousands of Python projects (with some recipes including extra
+dependencies as required, others omitting them, and others splitting
+packages into e.g. `package-base` and `package`). Some distribution
+systems already have concepts that map naturally to default extras, such
+as the `Recommends` field in Debian/Ubuntu and Fedora mentioned in
+[Rationale](#rationale).
+
+When an upstream project introduces a default extra, the repackager can
+choose to include those dependencies as required or omit them. In cases
+where the default extra contains dependencies that were previously
+required, the repackager may not need to change anything at all \--
+their existing recipe continues to work, and they gain the option to
+make those dependencies optional if the target distribution supports
+this.
+
+Default extras provide additional signal about how package authors would
+like their package to be installed for the majority of users, and this
+should inform repackaging decisions regardless of the target
+distribution.
 
 # Reference Implementation
 
-The following repository contains a fully functional demo package that
-makes use of default extras:
+The [following repository](https://github.com/wheel-next/pep_771)
+contains a fully functional demo package that makes use of default
+extras. This makes use of modified branches of several packages:
 
-<https://github.com/wheel-next/pep_771>
-
-This makes use of modified branches of several packages, and the
-following links are to these branches:
-
-- [Setuptools](https://github.com/wheel-next/setuptools/tree/pep_771)
+- [setuptools](https://github.com/wheel-next/setuptools/tree/pep_771)
 - [pip](https://github.com/wheel-next/pip/tree/pep_771)
 - [importlib_metadata](https://github.com/wheel-next/importlib_metadata/tree/pep_771)
 
@@ -875,7 +1187,7 @@ non-minimal installation for regular users (e.g. with recommended
 dependencies or a default backend) can technically already achieve this
 if they are willing to distribute two packages instead of one \-- for
 example `package-core` which would be the main package with minimal
-dependencies, and `package` which would be a metapackage that would
+dependencies, and `package` which would be a meta-package that would
 depend on `package-core` with optional dependencies enabled.
 
 Taking once again a concrete example from the [Motivation](#motivation)
@@ -883,7 +1195,7 @@ section, the [astropy](https://www.astropy.org/) package defines a
 `recommended` extra that users are currently instructed to install in
 the default installation instructions. In principle, one could rename
 the existing `astropy` package to e.g. `astropy-core` and then create a
-new `astropy` package which would be a metapackage that would contain
+new `astropy` package which would be a meta-package that would contain
 the following dependencies section:
 
 ``` toml
@@ -893,7 +1205,7 @@ dependencies = [
 ```
 
 Since users may want to pin or place version constraints on the
-`astropy` meta-package (e.g. `astropy>5.0`), the metapackage would need
+`astropy` meta-package (e.g. `astropy>5.0`), the meta-package would need
 to follow the same versions as the core package, and would need to use
 strict pinning in the dependency section, e.g.:
 
@@ -913,16 +1225,16 @@ projects, old and new.
 ### Mismatch between package and module name
 
 In terms of naming, there are two main options for a package that wants
-to use the metapackage approach:
+to use the meta-package approach:
 
 - The first option is for the existing package to be kept as-is, which
   means that `package` would provide the minimal installation, and to
-  then create a new metapackage with a different name, such as
+  then create a new meta-package with a different name, such as
   `package-all`. However, this suffers from one of the problems that
-  motivated this PEP in the first place - users are often not aware that
-  they can do e.g. `package[recommended]`, so in the same way, they
-  might not realise that `package-all` exists. This once again places
-  the burden on the average user to discover this, rather then shifting
+  motivated this PEP in the first place \-- users are often not aware
+  that they can do e.g. `package[recommended]`, so in the same way, they
+  might not realize that `package-all` exists. This once again places
+  the burden on the average user to discover this, rather than shifting
   some of the burden to more advanced users.
 
 - The second option is for the existing package to be renamed to e.g.
@@ -954,7 +1266,7 @@ Neither option is ideal:
   discussed in [Synchronizing metadata](#synchronizing-metadata)). In
   addition, the naming issue mentioned in [Mismatch between package and
   module name](#mismatch-between-package-and-module-name) has additional
-  complications here -- either the names of the repositories match the
+  complications here \-- either the names of the repositories match the
   packages, in which case any user who has a checkout of the previous
   `package` repository will need to update their remote URLs or any git
   clone URLs to point to the `package-core` repository. The alternative
@@ -963,9 +1275,9 @@ Neither option is ideal:
   could lead to confusion.
 - Switching to a monorepo may be a significant change for some projects,
   and it is not uncommon for tools to assume by default that a single
-  repository corresponds to a single package - while these can often be
-  configured to then work with a monorepo, it is an additional burden on
-  the maintainers. In addition, if the main package is moved to a
+  repository corresponds to a single package \-- while these can often
+  be configured to then work with a monorepo, it is an additional burden
+  on the maintainers. In addition, if the main package is moved to a
   sub-directory in the monorepo, any user that is e.g. pip installing
   the package from the repository URL will need to adjust this to
   install from a sub-directory (adding `subdirectory=` to the repo URL),
@@ -998,30 +1310,30 @@ doing:
 $ pip uninstall package
 ```
 
-will still be left with `package-core`, but may not realise it. This is
-not just confusing, but is in effect a breaking change that may impact a
+will still be left with `package-core`, but may not realize it. This is
+not only confusing, but is in effect a breaking change that may impact a
 number of existing workflows.
 
 ### Package distributions
 
 Having two packages instead of one would increase the long-term
-maintenance cost of package distributions simply by virtue of the fact
-that two packages would have to be released instead of one, and in some
-cases this would introduce extra manual work at each release.
+maintenance cost of package distributions because two packages would
+have to be released instead of one, and in some cases this would
+introduce extra manual work at each release.
 
 ### Synchronizing metadata
 
 The main metadata that would be important to keep synchronized between
-the main package and the metapackage is the version. Anytime a new
-release of the core package is done, the metapackage would need to have
+the main package and the meta-package is the version. Anytime a new
+release of the core package is done, the meta-package would need to have
 its version updated as well as the version pinning for the core package
 in the dependencies.
 
 In addition, all extras defined in the core package would need to be
-redefined and kept in sync in the metapackage. For example, if `package`
-defines a `additional` extra, users should still be able to install
-`package[additional]`, but users installing the `package-core` package
-should also have the option of doing `package-core[additional]`.
+redefined and kept in sync in the meta-package. For example, if
+`package` defines an `additional` extra, users should still be able to
+install `package[additional]`, but users installing the `package-core`
+package should also have the option of doing `package-core[additional]`.
 
 Other metadata that would need to be kept in sync includes for example
 author information and project URLs.
@@ -1029,7 +1341,7 @@ author information and project URLs.
 ### Summary
 
 Overall, this solution would imply a significantly higher maintenance
-burden, not just in terms of initial set-up and transition (which could
+burden, not only in terms of initial set-up and transition (which could
 already be prohibitive for large established projects), but also in
 terms of long-term maintenance. This also has the potential for breaking
 user workflows (in particular around the issue of repositories, and e.g.
@@ -1104,7 +1416,7 @@ In addition, no other string (such as `'default'`) can be used as a
 special string since all strings that would be a backward-compatible
 valid extras name may already be used in existing packages.
 
-There have been suggestions of using the special `None` Python variable,
+There have been suggestions of using the special Python value `None`,
 but again this is not possible, because even though one can use `None`
 in a `setup.py` file, this is not possible in declarative files such as
 `setup.cfg` or `pyproject.toml`, and furthermore ultimately extras names
@@ -1120,9 +1432,9 @@ better than introducing `Default-Extra`.
 
 ## Relying on tooling to deselect any default extras
 
-Another option to unselect extras would be to implement this at the
-level of packaging tools. For instance, pip could include an option such
-as:
+An alternative to the `package[]` syntax to unselect extras would be to
+implement this at the level of packaging tools. For instance, pip could
+include an option such as:
 
 ``` console
 $ pip install package --no-default-extras
@@ -1152,6 +1464,102 @@ be useful for package maintainers who want to identify places in
 dependency trees where default extras are being relied on. However, if
 it is supported, it should be made clear that using this flag does not
 guarantee a functional environment.
+
+## Standardizing an opt-in extra name
+
+During the discussion of this PEP, an alternative was proposed that
+would keep the ability for package authors to designate recommended
+extras, but make it opt-in rather than opt-out: a conventional extra
+name such as `recommended` or `full` would be standardized to mean \"the
+dependencies that a typical user should install\", and users would be
+taught to install `package[recommended]`. The meaning of a bare
+`package` would then be unchanged, which would be fully
+backward-compatible.
+
+This approach was not adopted for the following reasons:
+
+- It does not address the core problem described in
+  [Motivation](#motivation): users who do not know about extras, or do
+  not read the installation instructions, would still type
+  `pip install package` and get an incomplete installation. This is
+  precisely the situation that packages such as
+  [astropy](https://www.astropy.org/) (with `astropy[recommended]`) and
+  [napari](https://napari.org) (with `napari[all]`) are in today, so
+  standardizing the name would be at best a marginal improvement over
+  the status quo.
+- As discussed in [Adding a special entry in
+  extras_require](#adding-a-special-entry-in-extras_require), any name
+  that is a valid extra name may already be in use by existing packages
+  with a different meaning, so a reserved name cannot be introduced
+  without potential collisions, and any name that is not a valid extra
+  name would require new syntax, with the compatibility problems
+  described in [Syntax for deselecting
+  extras](#syntax-for-deselecting-extras).
+
+## Declaring recommended extras as metadata only
+
+A related alternative is to limit the standard to a way for package
+authors to *declare* which extras are recommended, for example via a
+metadata field such as `Recommended-Extra`, without specifying what
+installers should do with this information. Tools would then be free to
+decide how to expose it, for example by displaying a message such as
+\"to install package with recommended optional dependencies, use
+`package[recommended]`\", by prompting the user interactively, or by
+providing an option to install recommended extras.
+
+This approach has the appeal of leaving user-interface decisions to
+tools. However:
+
+- Interactive prompts are not viable in the many non-interactive
+  contexts in which installers are used (continuous integration,
+  containers, automated deployments), and informational messages are
+  easily missed, particularly in verbose installer output. Neither
+  delivers the key benefit of this PEP, which is that a user who
+  installs `package` gets a working installation with the recommended
+  dependencies.
+- Because the behavior would be tool-dependent, the same dependency
+  specification could result in different installed environments
+  depending on which installer is used, which undermines reproducibility
+  and makes behavior harder to document and teach. This PEP instead
+  specifies a single behavior for all installers.
+- For packages that are unusable without at least one backend or
+  frontend, a recommendation is not sufficient: the package needs a
+  default.
+
+The metadata introduced by this PEP does provide the declarative
+information that this alternative asks for, so tools remain free to
+build additional user-facing features on top of it, as discussed in
+[Relying on tooling to deselect any default
+extras](#relying-on-tooling-to-deselect-any-default-extras).
+
+## Requiring one of several extras
+
+For the multiple backends or frontends use case, it was suggested that a
+more natural solution would be a mechanism to express that a package
+*requires one of* several alternatives (a logical OR between
+dependencies or extras), with the installer selecting an alternative
+that is already present in the environment, or prompting the user
+otherwise.
+
+This PEP does not pursue this approach because:
+
+- A logical OR between dependencies cannot be expressed in the
+  dependency specification mini-language defined in
+  `508`{.interpreted-text role="pep"} without introducing new syntax,
+  with the backward-compatibility problems described in [Syntax for
+  deselecting extras](#syntax-for-deselecting-extras).
+- It would require installers to make choices based on the current state
+  of the environment, which makes the result of an installation depend
+  on context and is difficult to reconcile with lock files and other
+  reproducible resolution workflows.
+- It would address only the backends and frontends use case, and not the
+  recommended dependencies use case which motivates a large fraction of
+  the interest in this PEP.
+
+Default extras address the backends and frontends case by letting
+authors designate a default. A future PEP could build on the metadata
+introduced here to allow a set of extras to be declared as
+interchangeable alternatives, and nothing in this PEP precludes this.
 
 # Copyright
 

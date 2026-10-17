@@ -5,7 +5,7 @@ author:
 - Thomas Robitaille <thomas.robitaille@gmail.com>
 - Jonathan Dekhtiar <jonathan@dekhtiar.com>
 sponsor: Pradyun Gedam <pradyunsg@gmail.com>
-discussions_to: https://discuss.python.org/t/94905/
+discussions_to: https://discuss.python.org/t/109501/
 status: Draft
 type: Standards Track
 topic: Packaging
@@ -14,10 +14,11 @@ post_history:
 - '`15-Jan-2025 <https://discuss.python.org/t/77892/>`__'
 - '`06-Feb-2025 <https://discuss.python.org/t/79706/>`__'
 - '`09-Jun-2025 <https://discuss.python.org/t/94905/>`__'
+- '`15-Oct-2026 <https://discuss.python.org/t/109501/>`__'
 python_status: Draft
 url: https://peps.python.org/pep-0771/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0771.rst
-source_commit: 2fc4ffd55aeabe5d788d0e8dcc422322ea5dde78
+source_commit: e8c757670a7d93ec96f55a0c5d86512e633798d6
 ---
 
 # Abstract

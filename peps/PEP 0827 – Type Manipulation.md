@@ -18,7 +18,7 @@ post_history:
 python_status: Draft
 url: https://peps.python.org/pep-0827/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0827.rst
-source_commit: 0df2ebf9b0b55c18055ea408af4fbe0d9142958d
+source_commit: eb903187f9772b3f772e83746a5252db2fa5e717
 ---
 
 # Abstract
@@ -480,7 +480,7 @@ grammar of what Python expressions are considered as valid types.
          | <type-bool>
 
          # Conditional types
-         | <type> if <type-bool> else <type>
+         | <type> if <bool> else <type>
 
          # Types with variadic arguments can have
          # *[... for t in ...] arguments
@@ -489,64 +489,40 @@ grammar of what Python expressions are considered as valid types.
          # Type member access
          | <type>.<name>
 
-         | GenericCallable[<type>, lambda <args>: <type>]
-
-    # Type conditional checks are boolean compositions of
-    # boolean type operators
+    # Type conditional checks are boolean compositions of types
     <type-bool> =
-          <bool-operator>[<type> +]
-        | not <type-bool>
-        | <type-bool> and <type-bool>
-        | <type-bool> or <type-bool>
-        | any(<type-bool-for>)
-        | all(<type-bool-for>)
+          not <type>
+        | <type> and <type>
+        | <type> or <type>
+        | any(<type-for>)
+        | all(<type-for>)
 
     <variadic-type-arg> =
           <type> ,
-        | * [ <type-for-iter> ] ,
+        | * [ <type-for> ] ,
 
 
     <type-for> = <type> <type-for-iter>+ <type-for-if>*
     <type-for-iter> =
           # Iterate over a tuple type
-          for <var> in Iter[<type>]
+          for <var> in <type>
     <type-for-if> =
           if <type-bool>
-
-Where:
-
-- `<bool-operator>` refers to any of the names defined in the
-  `Boolean Operators <pep827-boolean-ops>`{.interpreted-text role="ref"}
-  section, whether used directly, qualified, or under another name.
-- `<type-bool-for>` is identical to `<type-for>` except that the result
-  type is a `<type-bool>` instead of a `<type>`.
 
 There are three and a half core syntactic features introduced: type
 booleans, conditional types, unpacked comprehension types, and type
 member access.
 
-`"Generic callables" <pep827-generic-callable>`{.interpreted-text
-role="ref"} are also technically a syntactic feature, but are discussed
-as an operator.
-
 ### Type booleans
 
-Type booleans are a special subset of the type language that can be used
-in the body of conditionals. They consist of the `Boolean
-Operators <pep827-boolean-ops>`{.interpreted-text role="ref"}, defined
-below, potentially combined with `and`, `or`, `not`, `all`, and `any`.
-For `all` and `any`, the argument is a comprehension of type booleans,
-evaluated in the same way as the
+Type booleans consist of type expressions combined with `and`, `or`,
+`not`, `all`, and `any`. For `all` and `any`, the argument is a
+comprehension of types, evaluated in the same way as the
 `unpacked comprehensions <pep827-unpacked>`{.interpreted-text
 role="ref"}.
 
 When evaluated in type annotation context, they will be equivalent to
 `Literal[True]` or `Literal[False]`.
-
-We restrict what operators may be used in a conditional so that at
-runtime, we can have those operators produce \"type\" values with
-appropriate behavior, without needing to change the behavior of existing
-`Literal[False]` values and the like.
 
 ### Conditional types
 
@@ -554,15 +530,12 @@ The type `true_typ if bool_typ else false_typ` is a conditional type,
 which resolves to `true_typ` if `bool_typ` is equivalent to
 `Literal[True]` and to `false_typ` otherwise.
 
-`bool_typ` is a type, but it needs to syntactically be a type boolean,
-defined above.
-
 ### Unpacked comprehension {#pep827-unpacked}
 
-An unpacked comprehension, `*[ty for t in Iter[iter_ty]]` may appear
-anywhere in a type that `Unpack[...]` is currently allowed, and it
-evaluates essentially to an `Unpack` of a tuple produced by a list
-comprehension iterating over the arguments of tuple type `iter_ty`.
+An unpacked comprehension, `*[ty for t in iter_ty]` may appear anywhere
+in a type that `Unpack[...]` is currently allowed, and it evaluates
+essentially to an `Unpack` of a tuple produced by a list comprehension
+iterating over the arguments of tuple type `iter_ty`.
 
 The comprehension may also have `if` clauses, which filter in the usual
 way.
@@ -574,8 +547,7 @@ function params have \"associated\" type members, which can be accessed
 by dot notation: `m.name`, `m.type`, etc.
 
 This operation is not lifted over union types. Using it on the wrong
-sort of type will be an error. It must be that way at runtime, and we
-want typechecking to match.
+sort of type will be an error.
 
 ## Type operators
 
@@ -586,9 +558,7 @@ This section defines the operators being introduced, and explains how
 they are to be evaluated in a typechecking or type evaluation context.
 The actual runtime classes being introduced, though, are just regular
 classes, and subscripting them produces normal `typing` generic alias
-objects (with the partial exception of the boolean operators and `Iter`,
-which produce aliases that have some dunder methods overloaded for
-`runtime hooks <pep827-rt-support>`{.interpreted-text role="ref"}).
+objects.
 
 Many of the operators specified have type bounds listed for some of
 their operands. These should be interpreted more as documentation than
@@ -613,13 +583,6 @@ propose to add that as actual syntax yet.
 - `IsEquivalent[T, S]`: Equivalent to
   `IsAssignable[T, S] and IsAssignable[S, T]`. Technically this relation
   is \"consistency\" in the typing spec, not equivalence.
-
-- `Bool[T]`: Returns `Literal[True]` if `T` is also `Literal[True]`.
-  Equivalent to
-  `IsAssignable[T, Literal[True]] and not IsAssignable[T, Never]`.
-
-  This is useful for invoking \"helper aliases\" that return a boolean
-  literal type.
 
 ### Basic operators
 
@@ -786,10 +749,10 @@ and a `.default` associated type, which exposes `D`.
 
 ### Generic Callable {#pep827-generic-callable}
 
-- `GenericCallable[Vs, lambda <vs>: Ty]`: A generic callable. `Vs` are a
-  tuple type of unbound type variables and `Ty` should be a `Callable`,
+- `GenericCallable[Vs, Ty]`: A generic callable. `Vs` are a tuple type
+  of unbound type variables and `Ty` should be a `Callable`,
   `staticmethod`, or `classmethod` that has access to the variables in
-  `Vs` via the bound variables in `<vs>`.
+  `Vs`.
 
 For now, we restrict the use of `GenericCallable` to the type argument
 of `Member`, to disallow its use for locals, parameter types, return
@@ -860,28 +823,17 @@ standard library, but intend to release a third-party evaluator library.
 
 While most of the extensions to the type system are \"inert\" type
 operator applications, the syntax also includes list iteration,
-conditionals, and attribute access, which will be automatically
-evaluated when the `__annotate__` method of a class, alias, or function
-is called.
+conditionals, and attribute access, which would ordinarily be evaluated
+when the `__annotate__` method of a class, alias, or function is called.
 
-In order to allow an evaluator library to trigger type evaluation in
-those cases, we add a new hook to `typing`:
+To address this, we depend on `849`{.interpreted-text role="pep"} (or
+something essentially isomorphic to it), which will allow retrieving the
+AST (or string) representation of arbitrary annotations.
 
-- `special_form_evaluator`: This is a `ContextVar` that holds a callable
-  that will be invoked with a `typing._GenericAlias` argument when
-  `__bool__` is called on a
-  `Boolean Operator <pep827-boolean-ops>`{.interpreted-text role="ref"}
-  or `__iter__` is called on `typing.Iter`. The returned value will then
-  have `bool` or `iter` called upon it before being returned.
-
-  If set to `None` (the default), the boolean operators will return
-  `False` while `Iter` will evaluate to `iter(())`.
-
-There has been some discussion of adding a `Format.AST` mode for
-fetching annotations (see this [PEP
-draft](https://imogenbits-peps.readthedocs.io/en/ast_format/pep-9999/)).
-That would combine extremely well with this proposal, as it would make
-it easy to still fetch fully unevaluated annotations.
+`849`{.interpreted-text role="pep"} introduces a new helper function
+`typing.evaluate_type_ast` that converts an AST into typing objects. It
+will be extended to understand the new syntax introduced in this PEP and
+produce appropriate `typing` objects to represent them.
 
 # Examples / Tutorial
 
@@ -933,7 +885,7 @@ types. `GetMemberType` gets the type of an attribute from a class.
                     c.name,
                     ConvertField[typing.GetMemberType[ModelT, c.name]],
                 ]
-                for c in typing.Iter[typing.Attrs[K]]
+                for c in typing.Attrs[K]
             ]
         ]
     ]:
@@ -978,7 +930,7 @@ all the `Property` attributes of `T`.
     type PropsOnly[T] = typing.NewProtocol[
         *[
             typing.Member[p.name, PointerArg[p.type]]
-            for p in typing.Iter[typing.Attrs[T]]
+            for p in typing.Attrs[T]
             if typing.IsAssignable[p.type, Property]
         ]
     ]
@@ -1011,7 +963,7 @@ in our test suite, but here is a possible implementation of just
                 p.quals,
                 GetDefault[p.init],
             ]
-            for p in typing.Iter[typing.Attrs[T]]
+            for p in typing.Attrs[T]
             if not typing.IsAssignable[
                 Literal[True],
                 GetFieldItem[p.init, Literal["primary_key"]],
@@ -1048,12 +1000,12 @@ iterating over all attributes.
                         p.name,
                         p.type,
                         # All arguments are keyword-only
-                        Literal[ParamKind.KEYWORD_ONLY],
+                        Literal[typing.ParamKind.KEYWORD_ONLY],
                         # GetDefault is Never when there's no default, so use it
                         # directly as D.
                         GetDefault[p.init],
                     ]
-                    for p in typing.Iter[typing.Attrs[T]]
+                    for p in typing.Attrs[T]
                 ],
             ],
             None,
@@ -1062,7 +1014,7 @@ iterating over all attributes.
     ]
     type AddInit[T] = typing.NewProtocol[
         InitFnType[T],
-        *[x for x in typing.Iter[typing.Members[T]]],
+        *[x for x in typing.Members[T]],
     ]
 
 `UpdateClass` can then be used to create a class decorator (a la
@@ -1095,7 +1047,7 @@ Using type iteration and `GetArg`, we can give a proper type to `zip`.
 
     def zip[*Ts](
         *args: *Ts, strict: bool = False
-    ) -> Iterator[tuple[*[ElemOf[t] for t in typing.Iter[tuple[*Ts]]]]]:
+    ) -> Iterator[tuple[*[ElemOf[t] for t in tuple[*Ts]]]]:
         return builtins.zip(*args, strict=strict)  # type: ignore[call-overload]
 
 Using the `Slice` operator and type alias recursion, we can also give a
@@ -1125,9 +1077,9 @@ error.
 
     type Zip[T, S] = (
         tuple[()]
-        if typing.Bool[Empty[T]] and typing.Bool[Empty[S]]
+        if Empty[T] and Empty[S]
         else typing.RaiseError[Literal["Zip length mismatch"], T, S]
-        if typing.Bool[Empty[T]] or typing.Bool[Empty[S]]
+        if Empty[T] or Empty[S]
         else tuple[*Zip[DropLast[T], DropLast[S]], tuple[Last[T], Last[S]]]
     )
 
@@ -1142,36 +1094,24 @@ We present implementations of a selection of them:
     # Pick<T, Keys>
     # Constructs a type by picking the set of properties Keys from T.
     type Pick[T, Keys] = typing.NewProtocol[
-        *[
-            p
-            for p in typing.Iter[typing.Members[T]]
-            if typing.IsAssignable[p.name, Keys]
-        ]
+        *[p for p in typing.Members[T] if typing.IsAssignable[p.name, Keys]]
     ]
 
     # Omit<T, Keys>
     # Constructs a type by picking all properties from T and then removing Keys.
     # Note that unlike in TS, our Omit does not depend on Exclude.
     type Omit[T, Keys] = typing.NewProtocol[
-        *[
-            p
-            for p in typing.Iter[typing.Members[T]]
-            if not typing.IsAssignable[p.name, Keys]
-        ]
+        *[p for p in typing.Members[T] if not typing.IsAssignable[p.name, Keys]]
     ]
 
     # KeyOf[T]
     # Constructs a union of the names of every member of T.
-    type KeyOf[T] = Union[*[p.name for p in typing.Iter[typing.Members[T]]]]
+    type KeyOf[T] = Union[*[p.name for p in typing.Members[T]]]
 
     # Exclude<T, U>
     # Constructs a type by excluding from T all union members assignable to U.
     type Exclude[T, U] = Union[
-        *[
-            x
-            for x in typing.Iter[typing.FromUnion[T]]
-            if not typing.IsAssignable[x, U]
-        ]
+        *[x for x in typing.FromUnion[T] if not typing.IsAssignable[x, U]]
     ]
 
     # Extract<T, U>
@@ -1179,7 +1119,7 @@ We present implementations of a selection of them:
     type Extract[T, U] = Union[
         *[
             x
-            for x in typing.Iter[typing.FromUnion[T]]
+            for x in typing.FromUnion[T]
             # Just the inverse of Exclude, really
             if typing.IsAssignable[x, U]
         ]
@@ -1188,10 +1128,7 @@ We present implementations of a selection of them:
     # Partial<T>
     # Constructs a type with all properties of T set to optional (T | None).
     type Partial[T] = typing.NewProtocol[
-        *[
-            typing.Member[p.name, p.type | None, p.quals]
-            for p in typing.Iter[typing.Attrs[T]]
-        ]
+        *[typing.Member[p.name, p.type | None, p.quals] for p in typing.Attrs[T]]
     ]
 
     # PartialTD<T>
@@ -1200,7 +1137,7 @@ We present implementations of a selection of them:
     type PartialTD[T] = typing.NewTypedDict[
         *[
             typing.Member[p.name, p.type, p.quals | Literal["NotRequired"]]
-            for p in typing.Iter[typing.Attrs[T]]
+            for p in typing.Attrs[T]
         ]
     ]
 
@@ -1240,8 +1177,8 @@ The type of the method is generic, and the generic is bound at the
 **method**, not the class. We need a way to represent such a generic
 function as a programmer might write it for a `NewProtocol`.
 
-One option that is somewhat appealing but doesn\'t work would be to use
-unbound type variables and let them be generalized:
+One option that we aren\'t taking is simply allowing the use of unbound
+type variables and letting them be generalized:
 
     type Foo = NewProtocol[
         Member[
@@ -1250,25 +1187,15 @@ unbound type variables and let them be generalized:
         ]
     ]
 
-The problem is that this is basically incompatible with runtime
-evaluation support, since evaluating the alias `Foo` will need to
-evaluate the `IsAssignable`, and so we will lose one side of the
-conditional at least. Similar problems will happen when evaluating
-`Members` on a class with generic functions. By wrapping the body in a
-lambda, we can delay evaluation in both of these cases. (The `Members`
-case of delaying evaluation works quite nicely for functions with
-explicit generic annotations. For old-style generics, we\'ll probably
-have to try to evaluate it and then raise an error when we encounter a
-variable.)
-
-With our real syntax, this looks like:
+We felt that we wanted an explicit binding site for type variables,
+though, and so we specify them with `GenericCallable`:
 
     type Foo = NewProtocol[
         Member[
             Literal["process"],
             GenericCallable[
                 tuple[T],
-                lambda T: Callable[[T], T if IsAssignable[T, list] else list[T]],
+                Callable[[T], T if IsAssignable[T, list] else list[T]],
             ],
         ]
     ]
@@ -1280,10 +1207,6 @@ types (where generics can be bound in nested positions deep inside
 function types) are cans of worms when combined with type inference[^1].
 While it would be nice to support, we don\'t want to open that can of
 worms now.
-
-The unbound type variable tuple is so that bounds and defaults and
-`TypeVarTuple`-ness can be specified, though maybe we want to come up
-with a new approach.
 
 # Backwards Compatibility
 
@@ -1344,7 +1267,7 @@ role="ref"}) something like:
     type PropsOnly[T] = typing.NewProtocol[
         {
             p.name: PointerArg[p.type]
-            for p in typing.Iter[typing.Attrs[T]]
+            for p in typing.Attrs[T]
             if typing.IsAssignable[p.type, Property]
         }
     ]
@@ -1379,7 +1302,7 @@ First, the syntax would be something like:
     type PropsOnly[T] = typing.NewProtocol[
         {
             k: PointerArg[ty]
-            for k, ty in typing.IterItems[typing.Attrs[T]]
+            for k, ty in typing.Attrs[T]
             if typing.IsAssignable[ty, Property]
         }
     ]
@@ -1413,7 +1336,7 @@ As an example, here is how mixing `()` and `[]` could look like:
     type PropsOnly[T] = typing.NewProtocol(
         {
             p.name: PointerArg[p.type]
-            for p in typing.Iter(typing.Attrs(T))
+            for p in typing.Attrs(T)
             if typing.IsAssignable(p.type, Property)
         }
     )
@@ -1429,7 +1352,6 @@ The main proposal is currently silent about exactly *how* `Member` and
 We could just make it work for those particular types, or we could
 introduce a general mechanism that might look something like:
 
-    @typing.has_associated_types
     class Member[
         N: str,
         T,
@@ -1443,27 +1365,27 @@ introduce a general mechanism that might look something like:
         type init = I
         type definer = D
 
-The decorator (or a base class) is needed if we want the dot notation
-for the associated types to be able to work at runtime, since we need to
-customize the behavior of `__getattr__` on the `typing._GenericAlias`
-produced by the class so that it captures both the type parameters to
-`Member` and the alias.
-
-(Though possibly we could change the behavior of `_GenericAlias` itself
-to avoid the need for that.)
-
 # Rejected Ideas
 
 ## Renounce all cares of runtime evaluation
 
-This would give us more flexibility to experiment with syntactic forms,
-and would allow us to dispense with some ugliness such as requiring
-`typing.Iter` in unpacked comprehension types and having a limited set
-of `<type-bool>` expressions that can appear in conditional types.
+For better or worse, runtime use of type annotations is widespread, e.g.
+`pydantic` depends on it, and one of our motivating examples
+(automatically deriving FastAPI CRUD models) depends on it too.
 
-For better or worse, though, runtime use of type annotations is
-widespread, e.g. `pydantic` depends on it, and one of our motivating
-examples (automatically deriving FastAPI CRUD models) depends on it too.
+## Implement runtime evaluation by calling `__annotate__` in a special environment
+
+The initial draft of this PEP anticipated evaluating annotations by
+calling `__annotate__` with type variables substituted in the closure
+and arranging for the right things to happen.
+
+The hope here is that it would avoid the need to add a new way of
+retrieving the annotations (`Format.AST`, here).
+
+It didn\'t really accomplish that goal, because other tools still will
+want to get unevaluated annotations, certain type iteration behaviors
+couldn\'t really be implemented properly with it, and it imposed severe
+limitations on syntax and semantics.
 
 ## Support TypeScript style pattern matching in subtype checking
 
@@ -1488,13 +1410,8 @@ Perhaps the most plausible variant would be something like:
 
     type ArrayArg[T] = El if IsAssignable[T, list[Infer[El]]] else Never
 
-Then, if we wanted to evaluate it at runtime, we\'d need to do something
-gnarly involving a custom `globals` environment that catches the unbound
-`Infer` arguments.
-
-Additionally, without major syntactic changes (using type operators
-instead of ternary), we wouldn\'t be able to match TypeScript\'s
-behavior of lifting the conditional over unions.
+It would also be potentially difficult to match TypeScript\'s behavior
+of lifting the conditional over unions.
 
 ## Replace `IsAssignable` with something weaker than \"assignable to\" checking
 
@@ -1539,7 +1456,7 @@ role="ref"}) would look like:
     type PropsOnly[T] = typing.NewProtocol[
         *[
             typing.Member[typing.GetName[p], PointerArg[typing.GetType[p]]]
-            for p in typing.Iter[typing.Attrs[T]]
+            for p in typing.Attrs[T]
             if typing.IsAssignable[typing.GetType[p], Property]
         ]
     ]
@@ -1549,7 +1466,7 @@ role="ref"}) would look like:
 Instead of writing:
 
 :   - `tt if tb else tf`
-    - `*[tres for T in Iter[ttuple]]`
+    - `*[tres for T in ttuple]`
 
 we could use type operator forms like:
 
@@ -1562,21 +1479,17 @@ Boolean operations would likewise become operators (`Not`, `And`, etc).
 
 The advantage of this is that constructing a type annotation never needs
 to do non-trivial computation (assuming we also get rid of dot
-notation), and thus we don\'t need
-`runtime hooks <pep827-rt-support>`{.interpreted-text role="ref"} to
-support evaluating them.
-
-It would also mean that it would be much easier to extract the raw type
-annotation. (The lambda form would still be somewhat fiddly. The
-non-lambda form would be trivial to extract, but requiring the
-declaration of a `TypeVar` goes against the grain of recent changes.)
-
-Another advantage is not needing any notion of a special `<type-bool>`
-class of types.
+notation), and thus we could avoid needing to depend on
+`849`{.interpreted-text role="pep"} to get the unevaluated AST.
 
 The disadvantage is that the syntax seems a *lot* worse. Supporting
-filtering while mapping would make it even more bad (maybe an extra
-argument for a filter?)
+filtering while mapping would make it even more bad (requiring an extra
+argument for the filter?)
+
+The implementation actually *does* have these operators internally, as
+`_Cond` and `_UnpackMap` (along with others), to represent the
+annotation after it has been translated from the AST. We could consider
+exposing them for backporting purposes, if we wanted.
 
 We can explore other options too if needed.
 
@@ -1763,6 +1676,18 @@ simulated in other ways.
   evaluations implement subtype checking fully invariantly: we check
   that the operators match and that every operand matches in both
   arguments invariantly.
+
+- What exactly should the result of conditionals and unpacked
+  comprehensions be when operating on `Any`?
+
+  Currently, conditionals are defined to take the true branch.
+
+  Unpacked comprehensions are currently not specified. The most
+  straightforward answer is for whatever the comprehension is being
+  unpacked into to *also* become `Any`, so that something like
+  `tuple[*[T | None for T in Any]]` would be `Any`. Arguably, though, we
+  would like `tuple[Any | None, ...]` as the result, which would require
+  some more careful thought to specify.
 
 # Acknowledgements
 

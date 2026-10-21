@@ -14,7 +14,7 @@ post_history:
 python_status: Draft
 url: https://peps.python.org/pep-0823/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0823.rst
-source_commit: ccb74052c6cfa0a5e795da2df95a2abb0f00940a
+source_commit: 1ba141a952db428dc7c29e2045072934a8ad4bda
 ---
 
 # Abstract
@@ -524,19 +524,134 @@ There are no new security implications from this proposal.
 
 # How to Teach This
 
-After students know how the attribute access `.` and subscript `[ ]`
-operators work, they may learn about the \"`None`-aware\" variants for
-both.
+## Prerequisites
 
-Students may find it helpful to think of `?.` and `?[ ]` as a
-combination of two different actions. First the `?` postfix represents
-an `is not None` check on the subexpression with short-circuiting if the
-check fails. If it succeeds, the attribute and subscript access are
-performed like normal.
+Students should already know how the following operators work:
 
-Experienced developers may find that, after learning about the PEP, they
-start to notice the patterns described in the [Motivation](#motivation)
-section in their own code bases.
+- Plain attribute access: `.`
+- Plain subscripting: `[ ]`
+
+## Basics
+
+The operator `?.` is a variant of `.` (attribute access) that returns
+`None` instead of raising `AttributeError` when the left argument is
+`None`. For example, `a?.b` returns `None` when `a` is `None`.
+
+Similarly, `a?[b]` is a variant of `a[b]` that returns `None` instead of
+raising `TypeError` when `a` is `None`. Here `b` can be anything that
+can be written inside square brackets, including multiple keys or
+indices, or slices.
+
+The left argument can be any expression. Examples:
+
+``` py823
+a.b.c?.d
+f()?.g
+a[b]?[c]
+(a or b)?.c
+```
+
+## Chaining
+
+You can write `a?.b.c.d`; when `a` is `None`, the entire `.b.c.d`
+portion is skipped, and `None` is returned. This also applies to
+`a?[b].c.d`.
+
+The rationale is that when `a` is `None`, `a?.b` is `None`, so a
+subsequent `.c` would definitely raise `AttributeError`. Since the `?.`
+operator allows `None` instead of an error in this case, it makes sense
+to extend this behavior to subsequent `.` operations.
+
+This also works for subsequent subscript and call operators. For
+example, `a?.b[c](d)` returns `None` when `a` is `None`, without
+evaluating `c` or `d`.
+
+Chaining does not suppress other operators, such as `+` or `==`.
+Chaining also stops at the end of the expression containing it, for
+example at the closing parenthesis in `(a?.b).c`, or at the comma in
+`f(a?.b, c)`. A subscript or call that is part of the chain does not end
+it: `a?.b[c](d).e` still returns `None` when `a` is `None`.
+
+A `?.` or `?[ ]` inside a call argument or subscript only affects that
+subexpression; for example, `a.b(c?.d).e` still calls `a.b` and accesses
+`.e` even if `c` is `None`.
+
+:::: warning
+::: title
+Warning
+:::
+
+`a?.b.c` is not the same as `(a?.b).c`! When `a` is `None`, the former
+returns `None`, but the latter raises `AttributeError`. Parentheses end
+the chain, so the final `.c` is evaluated normally.
+::::
+
+## Caveats
+
+An access is skipped only when the **left** argument is `None`. Errors
+from evaluating the left argument or performing an access on a value
+other than `None` are not suppressed:
+
+- When the left argument does not exist at all, you still get a
+  `NameError` or similar.
+- When the left argument is not `None` and the attribute name on the
+  right does not exist, you still get an `AttributeError`.
+- Similarly, if the key or index in `a?[b]` does not exist, you get a
+  `KeyError` or `IndexError`. To turn a missing key into `None`,
+  assuming `a` is a dictionary, you can use `a?.get(b)`. There is no
+  equivalent of `dict.get` for lists.
+
+The expression may still be `None` when `a` is not `None`. For example,
+`a?.b` returns `None` if `a` is not `None` but `a.b` is `None`. Static
+type checkers can flag `a?.b.c` as an error when `.b` can be `None`. At
+runtime you get an `AttributeError` when `.b` is `None`. You can use
+`a?.b?.c` to handle this situation, but that gets ugly quickly. Instead,
+consider changing the type of `.b` so it will never be `None`, or using
+a helper function.
+
+You cannot use `?.` or `?[ ]` in an assignment target; `a?.b = 42` and
+`a?[b] = 42` are syntax errors. You can use them in an independently
+evaluated expression within a target, though: `a[b?.c] = 42` is fine,
+but it may assign to `a[None]`.
+
+## When to use
+
+If you find yourself writing code like this:
+
+``` python
+def get_account(user: User | None) -> Account | None:
+    if user is None:
+        return None
+    return user.account
+```
+
+you can write it more concisely and more idiomatically as:
+
+``` py823
+def get_account(user: User | None) -> Account | None:
+    return user?.account
+```
+
+The same applies to conditional expressions like this:
+
+``` python
+return user.account if user is not None else None
+```
+
+If you see a truthiness check such as `user.account if user else None`,
+check whether it should test specifically for `None`. If so, consider
+writing `user?.account` instead.
+
+## When not to use
+
+You should rarely, if ever, need more than one `?.` or `?[ ]` operator
+in a single chain. If you find yourself writing `a?.b?.c` a lot,
+consider a less noisy alternative, such as a helper function or a schema
+change.
+
+Do not overuse `?.` and `?[ ]`. If you use them a lot, ask yourself
+whether your schema could be improved, or whether your code would
+benefit from some helper functions.
 
 # Reference Implementation
 
@@ -958,8 +1073,7 @@ contributed to a sense of not knowing which is the \"current\" or
 resolve itself once a PEP has been accepted. Any spelling mistake will
 also raise a `SyntaxError`.
 
-As described in the [How to Teach This](#how-to-teach-this) section, it
-can be helpful to think of `?.` and `?[ ]` as a combination of two
+It can be helpful to think of `?.` and `?[ ]` as a combination of two
 different actions which need to be performed in a certain order. The `?`
 postfix represents an `is not None` check on the subexpression and as
 such should always come first.
@@ -1151,6 +1265,11 @@ provide a meaning for these operators which roughly matches those in
 other languages while still respecting the norms in Python itself.
 
 # Footnotes
+
+# Change History
+
+- 20-Oct-2026: Turned [How to Teach This](#how-to-teach-this) into a
+  mini-tutorial.
 
 # Copyright
 

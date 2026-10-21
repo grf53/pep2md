@@ -7,7 +7,7 @@ author:
 - Konstantin Schütze <konstin@mailbox.org>
 - Ralf Gommers <ralf.gommers@gmail.com>
 sponsor: Carol Willing <willingc@gmail.com>
-discussions_to: Pending
+discussions_to: https://discuss.python.org/t/pep-850-wheel-variants-providers/109568
 status: Draft
 type: Standards Track
 topic: Packaging
@@ -15,11 +15,11 @@ requires:
 - '825'
 created: 15-Oct-2026
 post_history:
-- Pending
+- '`20-Oct-2026 <https://discuss.python.org/t/pep-850-wheel-variants-providers/109568>`__'
 python_status: Draft
 url: https://peps.python.org/pep-0850/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0850.rst
-source_commit: 0a1df41b03072c0821165472f55aaddc2418ea04
+source_commit: c2a9975db653f0e48197720cd2b3bc675f45391a
 ---
 
 # Abstract

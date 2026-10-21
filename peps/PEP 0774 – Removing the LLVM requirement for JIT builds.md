@@ -4,17 +4,17 @@ title: Removing the LLVM requirement for JIT builds
 author:
 - Savannah Ostrowski <savannah@python.org>
 discussions_to: https://discuss.python.org/t/78548/
-status: Deferred
+status: Withdrawn
 type: Standards Track
 created: 27-Jan-2025
 python_version: '3.14'
 post_history:
 - '`27-Jan-2025 <https://discuss.python.org/t/78548/>`__'
-resolution: '`14-Mar-2025 <https://discuss.python.org/t/78548/34>`__'
-python_status: Deferred
+resolution: '`20-Oct-2026 <https://discuss.python.org/t/78548/42>`__'
+python_status: Withdrawn
 url: https://peps.python.org/pep-0774/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0774.rst
-source_commit: 1a668db3295c58d81b1b29a9f79186e4eec751fe
+source_commit: 8eb85d4da5517e3f8649cdb071e893b896e9527c
 ---
 
 # Abstract

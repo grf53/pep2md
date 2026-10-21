@@ -6,16 +6,17 @@ author:
 - Ken Jin <kenjin@python.org>
 - Brandt Bucher <brandt@python.org>
 discussions_to: https://discuss.python.org/t/pep-836-jit-go-brrr-the-path-to-a-supported-jit-compiler-for-cpython/108010
-status: Draft
+status: Withdrawn
 type: Standards Track
 created: 02-Jul-2026
 python_version: '3.16'
 post_history:
 - '`03-Jul-2026 <https://discuss.python.org/t/pep-836-jit-go-brrr-the-path-to-a-supported-jit-compiler-for-cpython/108010>`__'
-python_status: Draft
+resolution: '`19-Oct-2026 <https://discuss.python.org/t/pep-836-jit-go-brrr-the-path-to-a-supported-jit-compiler-for-cpython/108010/57>`__'
+python_status: Withdrawn
 url: https://peps.python.org/pep-0836/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0836.rst
-source_commit: 4a6957369d7ab781b7cd171026533bba9792eacb
+source_commit: bb56fd07eb5372335185b15194b19337abba8284
 ---
 
 # Abstract
@@ -824,12 +825,13 @@ While this PEP does propose and outline an evolution for the JIT
 (transitioning from tracing to method-based, with heavy reuse of
 existing code), it does not prescribe a particular implementation of
 that design. With that said, a working proof-of-concept implementation
-against `main` exists, and will be shared soon.
+against `main`
+[exists](https://github.com/python/cpython/compare/main...openai-oss-forks:cpython:public/pep-836).
 
 Despite the fact that it is currently under development and incomplete
 (it does not yet handle generators and coroutines, for example, and has
 no support for polymorphism, both of which are supported partially by
-the existing tracing frontend), it is still 4-5% faster on the
+the existing tracing frontend), it is still 5-6% faster on the
 pyperformance and Pyston macrobenchmark suites vs. JIT off, on a
 GIL-enabled build. This demonstrates that the new design developed in
 just a couple of months can be competitive with the existing tracing
@@ -842,28 +844,28 @@ Excluding tests, the size of the current method-JIT implementation vs.
   -------------------------------------------------------------
   File Type       Files Changed   Lines Added   Lines Removed
   --------------- --------------- ------------- ---------------
-  Generated       13              4200          5300
+  Generated       10              1,300         3,100
 
-  Non-Generated   38              5800          2700
+  Non-Generated   40              3,000         4,300
 
-  Total           51              10000         8000
+  Total           50              4,300         7,400
   -------------------------------------------------------------
 
 Broken down by file extension:
 
-  ---------------------------------------------------------
-  Extension   Files Changed   Lines Added   Lines Removed
-  ----------- --------------- ------------- ---------------
-  .c          20              5400          2300
-
-  .c.h        6               2400          3300
-
-  .h          20              2100          2300
-
-  .py         5               100           100
-
-  Total       51              10000         8000
-  ---------------------------------------------------------
++-----------+---------------+-------------+---------------+
+| Extension | Files Changed | Lines Added | Lines Removed |
++===========+===============+=============+===============+
+| .c        | 16            | 2,800       | 3,400         |
++-----------+---------------+-------------+---------------+
+| .c.h      | 4             | > 900       | 2,000         |
++-----------+---------------+-------------+---------------+
+| .h        | 18            | > 500       | 1,500         |
++-----------+---------------+-------------+---------------+
+| .py       | 12            | > 100       | > 500         |
++-----------+---------------+-------------+---------------+
+| Total     | 50            | 4,300       | 7,400         |
++-----------+---------------+-------------+---------------+
 
 # Rejected Ideas
 

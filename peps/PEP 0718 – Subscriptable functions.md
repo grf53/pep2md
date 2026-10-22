@@ -10,13 +10,15 @@ status: Draft
 type: Standards Track
 topic: Typing
 created: 23-Jun-2023
-python_version: '3.15'
+python_version: '3.16'
 post_history:
 - '`24-Jun-2023 <https://discuss.python.org/t/28457/>`__'
+- '`24-Apr-2026 <https://discuss.python.org/t/28457/97>`__'
+- '`21-Oct-2026 <https://discuss.python.org/t/28457/156>`__'
 python_status: Draft
 url: https://peps.python.org/pep-0718/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0718.rst
-source_commit: 7b1ef5d0442f1c076ac6517fecd26e315fdc159a
+source_commit: 370885c2b0e8c9a09007dc029862e004fe4a2796
 ---
 
 # Abstract
@@ -65,29 +67,30 @@ def my_list[T](arr: Iterable[T]) -> list[T]:
    # do something...
    return list(arr)
 
-my_integer_list = my_list[int]()  # TypeError: 'function' object is not subscriptable
+my_integer_list = my_list[int]([])  # TypeError: 'function' object is not subscriptable
 ```
 
 There are a few workarounds:
 
-1.  Making a callable class:
+1.  Making a generic class whose `__new__` returns the result (this is
+    accepted by some type checkers, but not by all of them):
 
 ``` python
 class my_list[T]:
-     def __call__(self, arr: Iterable[T]) -> list[T]:
-         # do something...
-         return list(arr)
+    def __new__(cls, arr: Iterable[T]) -> list[T]:
+        # do something...
+        return list(arr)
 
 my_string_list = my_list[str]([])
 ```
 
-2.  Using `747`{.interpreted-text role="pep"}\'s TypeForm, with an extra
-    unused argument:
+2.  Using `747`{.interpreted-text role="pep"}\'s `TypeForm`, with an
+    extra argument that is only there for the type checker:
 
 ``` python
 from typing import TypeForm
 
-def my_list(*arr: Iterable[T], typ: TypeForm[T]) -> list[T]:
+def my_list[T](arr: Iterable[T], typ: TypeForm[T]) -> list[T]:
    # do something...
    return list(arr)
 
@@ -101,13 +104,13 @@ argument. Additionally it requires the user to understand a new concept
 3.  Annotating the assignment:
 
 ``` python
-my_integer_list: list[int] = my_list()
+my_integer_list: list[int] = my_list([])
 ```
 
 This solution isn\'t optimal as the return type is repeated, is more
 verbose and would require the type updating in multiple places if the
-return type changes. Additionally, it adds unnecesary and distracting
-verbossity when the intention is to pass the specialized value into
+return type changes. Additionally, it adds unnecessary and distracting
+verbosity when the intention is to pass the specialised value into
 another call.
 
 In conclusion, the current workarounds are too complex or verbose,
@@ -121,11 +124,11 @@ different specialised usages:
 
 ``` python
 NameNumberDict = dict[str, int]
-NameNumberDict(one=1, two=2, three="3")  # Invalid: Literal["3"] is not of type int``
+NameNumberDict(one=1, two=2, three="3")  # Invalid: Literal["3"] is not of type int
 ```
 
-This not currently possible for functions but if allowed we could easily
-specialise operations in certain sections of the codebase:
+This is not currently possible for functions but if allowed we could
+easily specialise operations in certain sections of the codebase:
 
 ``` python
 def constrained_addition[T](a: T, b: T) -> T: ...
@@ -179,55 +182,84 @@ foo[int](words)  # Invalid: list[str] is incompatible with list[int]
 ```
 
 Allowing subscription makes functions and methods consistent with
-generic classes where they weren\'t already. Whilst all of the proposed
-changes can be implemented using callable generic classes, syntactic
-sugar would be highly welcome.
+generic classes where they weren\'t already. Some of this can be
+emulated with generic classes, but only with extra boilerplate and not
+in every type checker, so syntactic sugar would be highly welcome.
 
 Due to this, specialising the function and using it as a new factory is
 fine
 
 ``` python
+def make_list[T](*args: T) -> list[T]: ...
+
 make_int_list = make_list[int]
 reveal_type(make_int_list())  # type is list[int]
 ```
 
-## Monomorphisation and Reification
+# Use Cases
 
-This proposal also opens the door to
-[monomorphisation](https://en.wikipedia.org/wiki/Monomorphization) and
-[reified
-types](https://en.wikipedia.org/wiki/Reification_(computer_science)).
+The following GitHub issues illustrate concrete situations where
+subscriptable functions are needed. They are grouped by the problem
+pattern each one represents.
 
-This would allow for a functionality which anecdotally has been
-requested many times.
+## Generic factory functions
 
-*Please note this feature is not being proposed by the PEP, but may be
-implemented in the future.*
+Users regularly want to specialize a generic factory function at the
+call site, mirroring the `dict[str, int](...)` syntax already available
+for classes. The current workaround --- wrapping the function in a
+callable class --- is widely described as unnecessarily complex.
 
-The syntax for such a feature may look something like:
+- [python/typing#1410](https://github.com/python/typing/issues/1410) ---
+  core feature request for making functions/methods subscriptable
+- [python/mypy#6073](https://github.com/python/mypy/issues/6073) ---
+  user wants `open_channel_pair[str]()`; the class-with-`__new__`
+  workaround is described as \"gross\"
+- [python/typing#938](https://github.com/python/typing/issues/938) ---
+  user hits TypeVar inference ambiguity and wants `func[T](args)` for
+  generic functions
 
-``` python
-def foo[T]():
-   return T.__value__
+## Explicit type argument provision
 
-assert foo[int]() is int
-```
+Type checkers cannot always infer `T` from the arguments alone (e.g.
+empty containers, lambdas, or factory callbacks). Users need a way to
+supply type arguments explicitly at the call site.
+
+- [python/mypy#4226](https://github.com/python/mypy/issues/4226) ---
+  mypy cannot infer or accept types on lambdas used as generic arguments
+- [python/typing#1938](https://github.com/python/typing/issues/1938) ---
+  users cannot annotate a variable holding a generic function because
+  `T` has no expressible outer scope
+
+## Inconsistency with PEP 695 generic syntax
+
+After `695`{.interpreted-text role="pep"} introduced
+`def func[T](x: T) -> T` syntax in Python 3.12, users naturally
+attempted `func[int](...)` and were met with confusing errors, since the
+syntax looks valid but is rejected at runtime and by type checkers.
+
+- [python/mypy#20927](https://github.com/python/mypy/issues/20927) ---
+  mypy rejects `func[int](100)` for a PEP 695 generic function with the
+  misleading message \"Type application is only supported for generic
+  classes\"
+- [microsoft/pyright#9216](https://github.com/microsoft/pyright/issues/9216)
+  --- Pyright raises `reportIndexIssue` for `func[str](var=1)` on a PEP
+  695 generic function
 
 # Rationale
 
 This proposal improves the consistency of the type system, by allowing
-syntax that already looks and feels like a natural of the existing
-syntax for classes.
+syntax that already looks and feels like a natural extension of the
+existing syntax for classes.
 
 If accepted, this syntax will reduce the necessity to learn about
-`747`{.interpreted-text role="pep"}s `TypeForm`, reduce verbosity and
-cognitive load of safely typed python.
+`747`{.interpreted-text role="pep"}\'s `TypeForm`, and reduce the
+verbosity and cognitive load of safely typed Python.
 
 # Specification
 
-In this PEP \"Function objects\" is used to refer to `FunctionType`,
-`MethodType`, `BuiltinFunctionType`, `BuiltinMethodType` and
-`MethodWrapperType`.
+In this PEP, \"function objects\" refers to `types.FunctionType`,
+`types.MethodType`, `types.BuiltinFunctionType`,
+`types.BuiltinMethodType` and `types.MethodWrapperType`.
 
 For `MethodType` you should be able to write:
 
@@ -240,25 +272,262 @@ Foo().make_list[int]()
 
 and have it work similarly to a `FunctionType`.
 
-For `BuiltinFunctionType`, so builtin generic functions (e.g. `max` and
-`min`) work like ones defined in Python. Built-in functions should
-behave as much like functions implemented in Python as possible.
+`BuiltinFunctionType` (e.g. `max` and `min`) should work like its pure
+Python counterparts.
 
 `BuiltinMethodType` is the same type as `BuiltinFunctionType`.
 
 `MethodWrapperType` (e.g. the type of `object().__str__`) is useful for
 generic magic methods.
 
+## Runtime behaviour
+
 Function objects should implement `__getitem__` to allow for
-subscription at runtime and return an instance of `types.GenericAlias`
-with `__origin__` set as the callable and `__args__` as the types
-passed.
+subscription at runtime and return an instance of
+`types.FunctionGenericAlias` (see
+[FunctionGenericAlias](#functiongenericalias)) with `__origin__` set as
+the callable and `__args__` as the types passed.
 
-Type checkers should support subscripting functions and understand that
-the parameters passed to the function subscription should follow the
-same rules as a generic callable class.
+The runtime `__getitem__` does not validate the subscription: it does
+not check whether the function is generic, nor the number or kinds of
+the type arguments. This is the same behaviour as generic builtins such
+as `list`, where `list[int, str]` is not caught at runtime. Checking
+subscriptions is left entirely to type checkers.
 
-## Setting `__orig_class__`
+This is needed because many functions that type checkers treat as
+generic have no type parameters at runtime, for example functions using
+old-style `TypeVar`s and functions that are only generic in a stub file:
+
+``` python
+# untyped.py: no type parameters at runtime
+def ident(x, /):
+    return x
+```
+
+``` python
+# untyped.pyi: generic only in the stub
+def ident[T](x: T, /) -> T: ...
+```
+
+``` python
+from typing import TypeVar
+
+from untyped import ident
+
+T = TypeVar("T")
+
+def legacy(x: T) -> T: ...      # legacy.__type_params__ == ()
+def modern[T](x: T) -> T: ...
+
+ident_int = ident[int]           # all three are valid at runtime
+legacy_int = legacy[int]         # and for type checkers
+modern_int = modern[int]
+
+modern[int, str]  # valid at runtime, but a type checker reports too many type arguments
+```
+
+Subscripting an object that is not a function object is not affected by
+this PEP: `obj[x]` always calls `type(obj).__getitem__` (or
+`__class_getitem__` for a class), even if `obj` has a generic `__call__`
+method.
+
+## Type checking subscriptions
+
+Type checkers should support subscripting generic functions. The type
+arguments follow the same rules as type arguments to a generic class
+with the same type parameters, in declaration order, including the rules
+for `ParamSpec`, `TypeVarTuple` and type parameter defaults.
+Subscripting a function that has no type parameters is an error.
+
+``` python
+def wrap[**P, R](f: Callable[P, R]) -> Callable[P, R]: ...
+
+wrap[[int, str], bool]   # P=[int, str], R=bool
+wrap[..., bool]          # P=..., R=bool
+
+def variadic[*Ts](*args: *Ts) -> tuple[*Ts]: ...
+
+variadic[int, str]       # Ts=(int, str)
+variadic[()]             # Ts=()
+
+def suffix[*Ts, T](*args: *Ts, last: T) -> tuple[*Ts, T]: ...
+
+suffix[int, str, bytes]  # Ts=(int, str), T=bytes
+```
+
+For functions using old-style `TypeVar`s, which have no declared type
+parameter list, the order is the order in which the type variables first
+appear in the parameter annotations, and then in the return annotation.
+This makes that order part of a function\'s interface: reordering the
+parameters of such a function changes the meaning of a subscription, so
+stubs should prefer `695`{.interpreted-text role="pep"} syntax for
+functions intended to be subscripted.
+
+``` python
+S = TypeVar("S")
+T = TypeVar("T")
+
+def legacy(x: T, y: S) -> tuple[S, T]: ...
+
+legacy[int, str]  # T=int, S=str
+```
+
+All type parameters declared in the function\'s type parameter list
+count, including those the signature does not use. A function declared
+as `def f[T]() -> None` is generic and subscriptable, matching
+`f.__type_params__` at runtime and the behaviour of generic classes:
+
+``` python
+def f[S, T](x: T) -> T: ...
+
+f[str, int]  # OK: S=str, T=int
+f[int]       # Invalid: too few type arguments
+```
+
+A type parameter that only appears in the return type (such as `T` in
+`def f[T]() -> T`) is not an error at the definition, since explicit
+subscription can now bind it. Type checkers should instead report an
+error at a call that leaves such a type parameter unsolved: one that is
+not bound by a subscription, has no default, and cannot be solved from
+the arguments or from the expected type of the call. Type parameters
+that do not appear in the signature at all are not affected by this
+rule.
+
+``` python
+def f[T]() -> T: ...  # OK
+
+x = f[int]()       # OK: x is int
+y: int = f()       # OK: solved from the expected type
+z = f()            # Invalid: cannot solve T
+```
+
+### Type parameter defaults
+
+This PEP specifies the semantics of function type parameter defaults
+(`696`{.interpreted-text role="pep"}) precisely, and thus requires a
+change to the typing specification, which currently leaves these
+semantics up to the individual type checker. Defaults on an
+unsubscripted function call should be used when inference provides no
+binding. On subscripted function calls all of the function\'s own type
+parameters are bound by the subscription (using defaults for the omitted
+ones) and the call does no inference for them; type parameters of an
+enclosing class are still inferred as usual (see [Binding
+Rules](#binding-rules)):
+
+``` python
+def g[T, U = bytes](x: T, y: U): ...
+
+g("", "")          # inferred: T=str, U=str
+g[str]             # T=str, U=bytes
+g[str, int]        # T=str, U=int
+g[str]("", b"")    # OK
+g[str]("", "")     # Invalid: y is str, expected bytes
+```
+
+### Callable types
+
+Type checkers should allow subscription of any value whose type is a
+generic callable type, that is, a callable type with its own type
+parameters, such as the declared type of a generic function or method.
+This is not limited to values known to be function objects, and includes
+functions whose generic signature is preserved by a decorator. Values of
+instance types are not included, even when the class or callback
+protocol has a generic `__call__` method: subscripting them uses their
+`__getitem__` as before. For example, a decorator that returns its
+argument unchanged keeps the function subscriptable:
+
+``` python
+def keep[F: Callable[..., object]](f: F) -> F: ...
+
+@keep
+def first[T](items: list[T]) -> T: ...
+
+first[int]([])  # OK
+```
+
+At runtime only function objects implement `__getitem__`, so a value
+with a generic callable type that is not a function object raises
+`TypeError` when subscripted, for example when a decorator is annotated
+as returning a generic `Callable` but returns an instance of a callable
+class. This PEP accepts that risk:
+
+- Requiring the type checker to prove that a value is a function object
+  would make most decorated functions unsubscriptable, because most
+  decorators can only be annotated as returning a `Callable`.
+- Common non-function callables in the standard library, such as
+  `functools.partial`, `functools.lru_cache` and `functools.cache`
+  objects, are typed as instances of generic classes rather than as
+  generic callables, so type checkers already reject subscripting them.
+  This was a concern in the discussion, but it does not apply to these
+  types (checked with both mypy prototypes).
+- Authors of decorators that return non-function callables can give
+  those objects a `__getitem__`, or annotate the decorator\'s return
+  type precisely.
+
+The remaining risk mostly comes from decorators annotated as returning a
+`Callable` whose type variables type checkers scope to the returned
+callable, for example `def make(func) -> Callable[[T], T]` returning an
+instance of a callable class. The decorated name then has a generic
+callable type and can be subscripted for the type checker, but raises
+`TypeError` at runtime.
+
+At runtime, a decorated function can be subscripted only if the
+decorator returns a function object:
+
+- Wrappers created with `functools.wraps` and functions decorated with
+  `contextlib.contextmanager` are function objects, so they work:
+
+  ``` python
+  with session[Admin]() as s: ...  # session is a @contextmanager function
+  ```
+
+  For the type checker, the decorator must give the result a generic
+  callable type, for example by being annotated as returning
+  `Callable[P, R]`. A wrapper whose type is inferred as an instance
+  (such as `functools._Wrapped` in typeshed) cannot be subscripted, even
+  though it works at runtime. Decorators using `ParamSpec`, such as
+  `contextmanager`, should also keep type parameters that only appear in
+  the return type, so that `session` above stays generic.
+
+- `functools.cache`, `functools.lru_cache` and `functools.partial`
+  return other objects, which raise `TypeError` (type checkers already
+  reject these, as above).
+
+Using an alias as the wrapper, as in `functools.wraps(f)(f[int])`, is
+not supported: aliases have no `__dict__` for `functools.wraps` to copy
+attributes to. Using an alias as the wrapped function, as in
+`functools.wraps(f[int])`, works, since aliases forward attribute access
+to the function.
+
+The stricter alternative is discussed in [Rejected
+Ideas](#rejected-ideas).
+
+### Python version
+
+Type checkers should report subscription of a function as an error when
+the target Python version is earlier than 3.16, since it fails at
+runtime there. This also covers builtins and other functions declared as
+generic in typeshed.
+
+## `FunctionGenericAlias`
+
+Subscripting a function object returns an instance of
+`types.FunctionGenericAlias`, a new subclass of `types.GenericAlias`.
+This gives a public way to tell whether an alias was created from a
+function or from a class, without checking `__origin__` against each
+function object type:
+
+``` python
+def foo[T](x: T) -> T: ...
+
+isinstance(foo[int], types.FunctionGenericAlias)  # True
+isinstance(list[int], types.FunctionGenericAlias)  # False
+```
+
+Apart from `__call__` (below), it behaves like `types.GenericAlias`: for
+example `foo[int] | None` creates a union, and subscripting an alias
+that still has type parameters, such as `foo[T][int]`, substitutes them.
+Unlike class aliases, it cannot be used as a base class.
 
 Currently, `__orig_class__` is an attribute set in
 `GenericAlias.__call__` to the instance of the `GenericAlias` that
@@ -270,11 +539,12 @@ class Foo[T]: ...
 assert Foo[int]().__orig_class__ == Foo[int]
 ```
 
-Currently, `__orig_class__` is unconditionally set; however, to avoid
-potential erasure on any created instances, this attribute should not be
-set if `__origin__` is an instance of any function object.
+`FunctionGenericAlias.__call__` does not set `__orig_class__`, as the
+object returned by a function is not an instance created from the alias,
+and setting the attribute would overwrite a value the function itself
+may have set.
 
-The following code snippet would fail at runtime without this change as
+The following code snippet would fail at runtime without this rule as
 `__orig_class__` would be `bar[str]` and not `Foo[int]`.
 
 ``` python
@@ -286,7 +556,8 @@ assert bar[str]().__orig_class__  == Foo[int]
 
 ## Interactions with `@typing.overload`
 
-This PEP allows type checkers to do overloading based on type variables:
+This PEP allows type checkers to do overloading based on type
+parameters:
 
 ``` python
 @overload
@@ -294,22 +565,60 @@ def serializer_for[T: str]() -> StringSerializer: ...
 @overload
 def serializer_for[T: list]() -> ListSerializer: ...
 
-def serializer_for():
+def serializer_for[T: str | list]():
     ...
 ```
 
-For overload resolution a new step will be required previous to any
-other, where the resolver will match only the overloads where the
-subscription may succeed.
+When an overloaded function is subscripted, type checkers apply the
+subscription to each overload separately, using the rules in [Type
+checking subscriptions](#type-checking-subscriptions): the number of
+type arguments (taking type parameter defaults and `TypeVarTuple`s into
+account) and the bounds and constraints of each type parameter.
+Overloads for which the subscription is invalid are discarded without
+reporting an error. If no overload remains, the subscription is an
+error. If one remains, the result is its specialised signature;
+otherwise the result is an overloaded function made of the remaining
+specialised signatures, and a call to it is evaluated with the usual
+overload rules.
+
+Because a subscription can select between overloads that differ only in
+the bounds or constraints of their type parameters, type checkers should
+not report such overloads as overlapping or unreachable. A call without
+subscription still picks the first matching overload as usual, so an
+unsubscripted `serializer_for()` returns `StringSerializer` without any
+error; such overloads are meant to be used with a subscription.
 
 ``` python
 @overload
-def make[*Ts]() -> float: ...
+def pick[T](x: T) -> list[T]: ...
 @overload
-def make[T]() -> int: ...
+def pick[S, U](x: S, y: U) -> dict[S, U]: ...
+def pick[S, U](x: S, y: U | None = None): ...
 
-make[int]  # matches first and second overload
-make[int, str]  # matches only first
+pick[int]             # only the first overload remains
+pick[str, int]("a", 1)  # only the second overload remains: dict[str, int]
+pick[int, str, bytes]   # Invalid: no overload accepts 3 type arguments
+
+serializer_for[str]()    # StringSerializer
+serializer_for[bytes]()  # Invalid: bytes satisfies neither bound
+```
+
+Only the implementation of an overloaded function exists at runtime, and
+the runtime `__getitem__` does not look at its type parameters, so the
+subscription works at runtime whatever the implementation declares. To
+keep the runtime `__type_params__` consistent with the overloads, type
+checkers should report an error when the overloads declare type
+parameters using `695`{.interpreted-text role="pep"} syntax and the
+implementation declares none:
+
+``` python
+@overload
+def serializer_for[T: str]() -> StringSerializer: ...
+@overload
+def serializer_for[T: list]() -> ListSerializer: ...
+
+def serializer_for():  # Invalid: the overloads declare type parameters but the implementation does not
+    ...
 ```
 
 ## Functions Parameterized by `TypeVarTuple`s
@@ -334,6 +643,14 @@ foo[int, str, bool, complex](Bar(), Baz())  # Invalid: cannot determine which pa
 spam[int, str, bool, complex](Bar())        # OK
 ```
 
+As for generic classes, a single `TypeVarTuple` may be bound using an
+unpacked tuple type:
+
+``` python
+spam[*tuple[int, str]](Bar())     # OK: same as spam[int, str]
+spam[*tuple[int, ...]](Bar())     # OK: *T is any number of ints
+```
+
 ## Binding Rules
 
 Method subscription (including `classmethods` and `staticmethods`),
@@ -347,12 +664,52 @@ class C[T]:
     def method[U](self, x: T, y: U): ...
     @classmethod
     def cls[U](cls, x: T, y: U): ...
+    @staticmethod
+    def stat[U](y: U): ...
 
-C[int].method[str](0, "")  # OK
-C[int].cls[str](0, "")     # OK
-C.cls[int, str](0, "")     # Invalid: too many type parameters
-C.cls[str](0, "")          # OK, U will be matched to str
+C[int]().method[str](0, "")  # OK
+C[int].cls[str](0, "")       # OK
+C.cls[int, str](0, "")       # Invalid: too many type parameters
+C.cls[str](0, "")            # OK: U=str, T is solved from the call (int)
+C[int].stat[str]("")         # OK: U=str
 ```
+
+When a method is accessed on the unspecialised class, as in
+`C.cls[str](0, "")`, the subscription binds only the method\'s own type
+parameters; the class\'s type parameters are solved from the call, as
+they would be without the subscription.
+
+## Kinds of functions
+
+Generator functions, coroutine functions and asynchronous generator
+functions are function objects, so they can be subscripted like any
+other function; calling the result returns the generator, coroutine or
+asynchronous generator as usual. This is especially useful for
+generators that receive values through `send()`, whose send type often
+cannot be inferred from the arguments:
+
+``` python
+class SupportsAdd(Protocol):
+    def __add__(self, other: Self, /) -> Self: ...
+
+def running_sum[T: SupportsAdd](start: T) -> Generator[T, T, None]:
+    total = start
+    while True:
+        total += yield total
+
+acc = running_sum(0)         # T is inferred as int
+next(acc)
+acc.send(1.5)                # Invalid: float is not assignable to int
+
+acc = running_sum[float](0)  # T=float
+next(acc)
+acc.send(1.5)                # OK
+```
+
+Lambdas cannot declare type parameters, so they are never generic:
+subscripting a lambda is a type error, although it succeeds at runtime.
+The compiler\'s existing `SyntaxWarning` for subscripting a lambda
+literal is kept. See [Deferred Ideas](#deferred-ideas).
 
 # Backwards Compatibility
 
@@ -360,15 +717,165 @@ Currently these classes are not subclassable and so there are no
 backwards compatibility concerns with regards to classes already
 implementing `__getitem__`.
 
+Code that tries `obj[key]` and falls back to attribute access when it
+raises `TypeError` will behave differently for functions: the
+subscription now succeeds and returns an alias. For example, template
+engines that look up `obj.name` by trying `obj["name"]` first (such as
+Django\'s template variable resolution) would get an alias of the
+function instead of its `name` attribute, and may then call it. Such
+code needs to check for function objects (or
+`types.FunctionGenericAlias` results) before relying on the `TypeError`.
+
+# Runtime Performance
+
+Each use of `func[T]` allocates a `types.FunctionGenericAlias` object on
+the heap. When the subscript is immediately called (`func[T](args)`),
+the alias is constructed, called, and then discarded --- it is a
+transient allocation per call site. Class subscriptions such as
+`list[int]()` pay a similar cost, and are in fact slower than function
+subscriptions.
+
+Measurements posted in the discussion, on an unoptimised build of the
+original implementation (a Python 3.13 alpha branch), give an idea of
+the cost (time per call):
+
+  Expression           Time
+  -------------------- --------
+  `foo()`              34 ns
+  `cast(int, foo())`   69 ns
+  `foo[int]()`         128 ns
+
+So a subscripted call is about twice as slow as a `cast` and about four
+times as slow as a plain call. Annotating the assignment instead
+(`x: int = foo()`) has no runtime cost and remains available where this
+matters.
+
+Repeatedly subscripting the same function inside a hot loop is
+unnecessarily wasteful, since the alias is recreated on every iteration.
+Users should hoist the specialisation outside the loop:
+
+``` python
+# Avoid: allocates an alias on every iteration
+for item in data:
+    result = process[int](item)
+
+# Prefer: allocate once, call many times
+process_int = process[int]
+for item in data:
+    result = process_int(item)
+```
+
+Adding `__getitem__` to the function object types does not change how
+functions are called, so calls that do not use subscription are not
+expected to become slower.
+
 # Reference Implementation
 
-The runtime changes proposed can be found here
-<https://github.com/Gobot1234/cpython/tree/function-subscript>
+- [python/cpython#156201](https://github.com/python/cpython/pull/156201):
+  the runtime changes for function, method and builtin function objects,
+  a port to the main branch of the original
+  [function-subscript](https://github.com/Gobot1234/cpython/tree/function-subscript)
+  branch. It predates `types.FunctionGenericAlias` (it returns a plain
+  `types.GenericAlias`) and does not yet cover `MethodWrapperType`.
+- [python/mypy#21880](https://github.com/python/mypy/pull/21880): a type
+  checker prototype of the behaviour specified here, behind
+  `--enable-incomplete-feature=SubscriptableFunctions`. It confirmed
+  that `ParamSpec`, `TypeVarTuple` and type parameter defaults can
+  follow the rules for generic classes by reusing the same code, and
+  implements the overload filtering described above.
+- [python/mypy#21881](https://github.com/python/mypy/pull/21881): a
+  variant of the prototype that only allows subscripting callables
+  traceable to a `def` (see [Rejected Ideas](#rejected-ideas)). It
+  cannot be fully sound either, since type checkers have to assume that
+  decorators preserve the kind of object they wrap.
+
+The following rules are not yet implemented in either prototype:
+reporting unsolvable type parameters at the call instead of the
+definition, not reporting overloads that differ only in type parameter
+bounds as overlapping, the consistency rule for overload
+implementations, the Python version check, and keeping return-only type
+parameters through `ParamSpec` decorators (mypy currently solves them to
+`Never`, so a `contextmanager` function like `session` above cannot be
+subscripted).
+
+# Rejected Ideas
+
+## Only allowing subscription of known function objects
+
+Type checkers could allow subscription only of values they know to be
+function objects, rejecting values that are only known to have a generic
+`Callable` type. This would rule out more runtime errors, but most
+decorated functions could then never be subscripted. The
+`python/mypy#21881` prototype shows that keeping decorated functions
+subscriptable requires assuming that decorators return function objects,
+which is the same risk this PEP accepts, with a more complicated rule.
+
+## A property to tell function aliases from class aliases
+
+A property on `types.GenericAlias` reporting whether `__origin__` is a
+function object was considered. `GenericAlias` forwards attribute access
+to its `__origin__`, so adding a new attribute could break existing
+code; a subclass, `types.FunctionGenericAlias`, is used instead.
+
+## New syntax
+
+Angle brackets (`f<int>(x)`) or a dedicated operator (`f::[int](x)`)
+would avoid reusing `[]`, and a dedicated syntax could let the compiler
+treat the type arguments specially. However, `f<int>(x)` is already
+valid syntax with a different meaning, and any new syntax is a much
+larger change than adding `__getitem__` to function objects, which works
+for all existing functions and only needs a library-level change.
+
+## Validating subscriptions at runtime
+
+The runtime `__getitem__` could check that the function is generic and
+that the number of type arguments matches. This would break functions
+that type checkers treat as generic but that have no type parameters at
+runtime, such as functions using old-style `TypeVar`s or functions only
+typed in stub files. It would also be inconsistent with generic
+builtins, which do not validate their type arguments.
+
+# Deferred Ideas
+
+## Accessing type arguments at runtime
+
+This PEP does not give a function any way to access its type arguments
+at runtime (sometimes called reification). For classes this is possible,
+but limited, through `__orig_class__`:
+
+``` python
+>>> class Foo[T]: ...
+>>> Foo[int]()
+<__main__.Foo object at 0x...>
+>>> Foo[int]().__orig_class__.__args__
+(<class 'int'>,)
+```
+
+There is currently no equivalent for functions, and related requests
+exist for classes (see
+[python/typing#629](https://github.com/python/typing/issues/629), about
+type arguments inside class methods of generic classes). Designing it is
+left to a future PEP.
+
+## Generic lambdas
+
+Lambdas cannot declare type parameters, and there is no inline syntax
+for a generic callable type. A syntax such as `lambda[T](arg: T) -> T`
+was [suggested in the
+discussion](https://discuss.python.org/t/28457/128). This is left to a
+future PEP.
 
 # Acknowledgements
 
 Thank you to Alex Waygood and Jelle Zijlstra for their feedback on this
 PEP and Guido for some motivating examples.
+
+# Change History
+
+- 24-Apr-2026: Added examples, rationale and binding rules.
+- 21-Oct-2026: Addressed discussion feedback, clarified runtime and
+  typing rules, and added use cases, performance notes and rejected
+  ideas.
 
 # Copyright
 

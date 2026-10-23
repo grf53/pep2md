@@ -18,20 +18,22 @@ post_history:
 python_status: Draft
 url: https://peps.python.org/pep-0718/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0718.rst
-source_commit: 370885c2b0e8c9a09007dc029862e004fe4a2796
+source_commit: dc2afe539471021eee7fb58fe0e60f486b17a692
 ---
 
 # Abstract
 
-This PEP proposes making function objects subscriptable for typing
-purposes. Doing so gives developers explicit control over the types
-produced by the type checker where bi-directional inference (which
-allows for the types of parameters of anonymous functions to be
-inferred) and other methods than specialisation are insufficient. It
-also makes functions consistent with regular classes in their ability to
-be subscripted.
+This PEP proposes making function objects subscriptable so that
+developers can explicitly supply type arguments to generic functions, as
+in `func[int](...)`. This allows explicit specialisation when type
+inference is insufficient. It also makes generic functions consistent
+with generic classes in their support for subscription.
 
 # Motivation
+
+Comments marked `Invalid` in this section indicate errors reported by
+type checkers. Runtime exceptions are labelled with their exception
+type.
 
 Currently, classes allow passing type annotations for generic
 containers. This is especially useful in common constructors such as
@@ -59,8 +61,11 @@ NameNumberDict(
 )
 ```
 
-In spite of the utility of this syntax, when trying to use it with a
-function, an error is raised, as functions are not subscriptable.
+At runtime this call succeeds and stores the string `"3"` in the
+dictionary.
+
+Attempting to use this syntax with a function raises `TypeError` at
+runtime, as functions are not subscriptable.
 
 ``` python
 def my_list[T](arr: Iterable[T]) -> list[T]:
@@ -127,12 +132,20 @@ NameNumberDict = dict[str, int]
 NameNumberDict(one=1, two=2, three="3")  # Invalid: Literal["3"] is not of type int
 ```
 
-This is not currently possible for functions but if allowed we could
-easily specialise operations in certain sections of the codebase:
+A generic function can accept arguments of different types by inferring
+a common supertype for its type parameter. For example, mypy accepts the
+following call and infers `object` as its result type:
 
 ``` python
 def constrained_addition[T](a: T, b: T) -> T: ...
 
+reveal_type(constrained_addition(1, "1"))  # mypy: object
+```
+
+With the proposed subscription syntax, we could require `int` for both
+arguments:
+
+``` python
 # where we work exclusively with ints
 int_addition = constrained_addition[int]
 int_addition(2, 4+8j)  # Invalid: complex is not of type int
@@ -169,6 +182,8 @@ def foo[T](x: list[T]) -> T: ...
 reveal_type(foo([]))  # type checker cannot infer T (yet again)
 ```
 
+With this proposal, `T` could be supplied explicitly:
+
 ``` python
 reveal_type(foo[int]([]))  # type is int
 ```
@@ -186,8 +201,8 @@ generic classes where they weren\'t already. Some of this can be
 emulated with generic classes, but only with extra boilerplate and not
 in every type checker, so syntactic sugar would be highly welcome.
 
-Due to this, specialising the function and using it as a new factory is
-fine
+The proposed syntax also allows a specialised function to be reused as a
+factory:
 
 ``` python
 def make_list[T](*args: T) -> list[T]: ...
@@ -257,9 +272,20 @@ verbosity and cognitive load of safely typed Python.
 
 # Specification
 
-In this PEP, \"function objects\" refers to `types.FunctionType`,
-`types.MethodType`, `types.BuiltinFunctionType`,
-`types.BuiltinMethodType` and `types.MethodWrapperType`.
+Examples in this section illustrate the proposed behaviour unless
+explicitly described as current behaviour.
+
+:::: note
+::: title
+Note
+:::
+
+In this PEP, \"function objects\" means instances of
+`types.FunctionType`, `types.MethodType`, `types.BuiltinFunctionType`,
+`types.BuiltinMethodType` and `types.MethodWrapperType`. Other callable
+objects, such as instances of classes defining `__call__`, are outside
+this definition.
+::::
 
 For `MethodType` you should be able to write:
 
@@ -358,6 +384,10 @@ suffix[int, str, bytes]  # Ts=(int, str), T=bytes
 For functions using old-style `TypeVar`s, which have no declared type
 parameter list, the order is the order in which the type variables first
 appear in the parameter annotations, and then in the return annotation.
+This is the same first-appearance rule used by generic classes with
+old-style type variables when their order is not explicitly given by a
+`Generic[...]` or `Protocol[...]` base.
+
 This makes that order part of a function\'s interface: reordering the
 parameters of such a function changes the meaning of a subscription, so
 stubs should prefer `695`{.interpreted-text role="pep"} syntax for
@@ -466,8 +496,8 @@ class. This PEP accepts that risk:
 
 The remaining risk mostly comes from decorators annotated as returning a
 `Callable` whose type variables type checkers scope to the returned
-callable, for example `def make(func) -> Callable[[T], T]` returning an
-instance of a callable class. The decorated name then has a generic
+callable, for example `def make[T](func) -> Callable[[T], T]` returning
+an instance of a callable class. The decorated name then has a generic
 callable type and can be subscripted for the type checker, but raises
 `TypeError` at runtime.
 
@@ -639,8 +669,11 @@ role="pep"}, the type variables cannot be resolved unambiguously with
 the current syntax.
 
 ``` python
-foo[int, str, bool, complex](Bar(), Baz())  # Invalid: cannot determine which parameters are passed to *T and *U. Explicitly parameterise the instances individually
-spam[int, str, bool, complex](Bar())        # OK
+foo[int, str, bool, complex](Bar(), Baz())  # Invalid: cannot determine which
+                                            # parameters are passed to *T and
+                                            # *U. Explicitly parameterise the
+                                            # instances individually.
+spam[int, str, bool, complex](Bar())  # OK
 ```
 
 As for generic classes, a single `TypeVarTuple` may be bound using an
@@ -707,9 +740,9 @@ acc.send(1.5)                # OK
 ```
 
 Lambdas cannot declare type parameters, so they are never generic:
-subscripting a lambda is a type error, although it succeeds at runtime.
-The compiler\'s existing `SyntaxWarning` for subscripting a lambda
-literal is kept. See [Deferred Ideas](#deferred-ideas).
+subscripting a lambda is a type checker error, although it succeeds at
+runtime. The compiler\'s existing `SyntaxWarning` for subscripting a
+lambda literal is kept. See [Deferred Ideas](#deferred-ideas).
 
 # Backwards Compatibility
 
@@ -728,12 +761,12 @@ code needs to check for function objects (or
 
 # Runtime Performance
 
-Each use of `func[T]` allocates a `types.FunctionGenericAlias` object on
-the heap. When the subscript is immediately called (`func[T](args)`),
-the alias is constructed, called, and then discarded --- it is a
-transient allocation per call site. Class subscriptions such as
-`list[int]()` pay a similar cost, and are in fact slower than function
-subscriptions.
+Under this proposal, each use of `func[T]` allocates a
+`types.FunctionGenericAlias` object on the heap. When the subscript is
+immediately called (`func[T](args)`), the alias is constructed, called,
+and then discarded --- it is a transient allocation per call site. Class
+subscriptions such as `list[int]()` pay a similar cost, and are in fact
+slower than function subscriptions.
 
 Measurements posted in the discussion, on an unoptimised build of the
 original implementation (a Python 3.13 alpha branch), give an idea of
@@ -768,6 +801,74 @@ for item in data:
 Adding `__getitem__` to the function object types does not change how
 functions are called, so calls that do not use subscription are not
 expected to become slower.
+
+# How to Teach This
+
+## Prerequisites
+
+The user needs to be familiar with generic classes and functions using
+the `695`{.interpreted-text role="pep"} syntax, and with specializing a
+generic class: for example, `Box[int]` for a class declared as
+`class Box[T]: ...`.
+
+## Basics
+
+Take a generic function, for example:
+
+``` python
+def func[T](a: T, b: T) -> T:
+    return a
+```
+
+The new feature allows writing e.g. `func[int]` to specialize the
+function with a particular type argument for `T`. Type checkers
+substitute `int` for `T` when checking calls through this
+specialization. For example, `func[int](1, 2)` is valid, but
+`func[int](1, "")` is rejected by the type checker.
+
+The rules for matching type arguments to type parameters follow those
+for generic classes (see [Type checking
+subscriptions](#type-checking-subscriptions)). Type checkers reject
+specialization of functions that are not generic.
+
+A specialization can be saved and reused:
+
+``` python
+int_func = func[int]
+int_func(1, 2)   # OK
+int_func(1, "")  # Type checker error
+```
+
+Specialization affects type checking. It does not enforce types at
+runtime or make the supplied type arguments available inside the
+function.
+
+## When inference is used
+
+Explicit specialization binds the function\'s own type parameters, using
+defaults for omitted arguments. Without specialization, normal type
+inference applies.
+
+## Caveats
+
+Functions wrapped by `functools.cache` or `functools.lru_cache`, and
+objects created by `functools.partial(...)`, do not support
+specialization. See [Callable types](#callable-types) for details about
+decorators and other callable objects.
+
+## When to use this, and when not
+
+Usually, type inference is sufficient. Explicit type arguments are
+useful when inference does not express the intended types.
+
+It can be useful for selecting an overload, specifying element types for
+empty containers, or inferring parameter types for lambda arguments to a
+generic function.
+
+Another use is checking arguments against a chosen type rather than
+allowing inference to select a broader one. For example,
+`func[int](x, y)` requires arguments assignable to `int`; mypy instead
+infers `T = object` for `func(1, "")`.
 
 # Reference Implementation
 
@@ -872,10 +973,10 @@ PEP and Guido for some motivating examples.
 
 # Change History
 
-- 24-Apr-2026: Added examples, rationale and binding rules.
 - 21-Oct-2026: Addressed discussion feedback, clarified runtime and
   typing rules, and added use cases, performance notes and rejected
   ideas.
+- 24-Apr-2026: Added examples, rationale and binding rules.
 
 # Copyright
 

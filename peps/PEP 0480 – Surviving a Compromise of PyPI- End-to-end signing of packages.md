@@ -6,7 +6,6 @@ author:
 - Vladimir Diaz <vladimir.diaz@nyu.edu>
 - Justin Cappos <jcappos@nyu.edu>
 - Marina Moore <mm9693@nyu.edu>
-bdfl_delegate: Donald Stufft <donald@stufft.io>
 discussions_to: https://discuss.python.org/t/5666
 status: Draft
 type: Standards Track
@@ -17,7 +16,7 @@ created: 08-Oct-2014
 python_status: Draft
 url: https://peps.python.org/pep-0480/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0480.rst
-source_commit: bbce4335b68b0e0bff407686fcf304ff3f29f942
+source_commit: 856863da17e3c144af827aef8cdbbd8ba657f9f5
 ---
 
 # Abstract

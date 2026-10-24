@@ -4,7 +4,6 @@ title: How to Re-invent the Wheel
 author:
 - Emma Harper Smith <emma@python.org>
 sponsor: Barry Warsaw <barry@python.org>
-pep_delegate: Paul Moore <p.f.moore@gmail.com>
 discussions_to: https://discuss.python.org/t/pep-777-how-to-re-invent-the-wheel/67484
 status: Draft
 type: Standards Track
@@ -15,7 +14,7 @@ post_history:
 python_status: Draft
 url: https://peps.python.org/pep-0777/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0777.rst
-source_commit: 8febb9d1b8133a6e4604abb774213756bb140bb1
+source_commit: f95042bfd618388a2f783ac8ae62ee0a9656f90b
 ---
 
 # Abstract

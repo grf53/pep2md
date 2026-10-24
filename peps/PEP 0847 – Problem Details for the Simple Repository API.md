@@ -6,7 +6,6 @@ author:
 - William Woodruff <william@yossarian.net>
 - Zsolt Dollenstein <zsol.zsol@gmail.com>
 sponsor: Donald Stufft <donald@stufft.io>
-pep_delegate: Donald Stufft <donald@stufft.io>
 discussions_to: https://discuss.python.org/t/pep-847-problem-details-for-the-simple-repository-api/108996
 status: Draft
 type: Standards Track
@@ -18,7 +17,7 @@ post_history:
 python_status: Draft
 url: https://peps.python.org/pep-0847/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0847.rst
-source_commit: 4fe70fbbaede57bf4e0dcfd956ac3594a643462f
+source_commit: 2a34ced28c47232a8dceeab8a46a7a5dad825651
 ---
 
 # Abstract

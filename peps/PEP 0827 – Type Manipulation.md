@@ -18,7 +18,7 @@ post_history:
 python_status: Draft
 url: https://peps.python.org/pep-0827/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0827.rst
-source_commit: eb903187f9772b3f772e83746a5252db2fa5e717
+source_commit: 656c0ea7299dc369dd9d57830104bf9cae1c0342
 ---
 
 # Abstract
@@ -775,12 +775,15 @@ role="ref"}.
 
 ### Update class {#pep827-update-class}
 
-- `UpdateClass[*Ps: Member]`: A special form that *updates* an existing
-  nominal class with new members (possibly overriding old ones, or
-  removing them by making them have type `Never`).
+- `UpdateClass[Cls, *Ps: Member]`: A special form that *updates* an
+  existing nominal class with new members (possibly overriding old ones,
+  or removing them by making them have type `Never`).
 
   This can only be used in the return type of a type decorator or as the
   return type of `__init_subclass__`.
+
+  `Cls` must be the class to update. For `__init_subclass__`, `cls`
+  ought to have `type[T]` and `T` should be passed as `Cls`.
 
   When a class is declared, if one or more of its ancestors have an
   `__init_subclass__` with an `UpdateClass` return type, they are
@@ -1023,6 +1026,7 @@ iterating over all attributes.
     def dataclass_ish[T](
         cls: type[T],
     ) -> typing.UpdateClass[
+        T,
         # Add the computed __init__ function
         InitFnType[T],
     ]:
@@ -1034,6 +1038,7 @@ Or to create a base class (a la Pydantic) that does.
         def __init_subclass__[T](
             cls: type[T],
         ) -> typing.UpdateClass[
+            T,
             # Add the computed __init__ function
             InitFnType[T],
         ]:

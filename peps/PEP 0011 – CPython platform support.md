@@ -16,7 +16,7 @@ post_history:
 python_status: Active
 url: https://peps.python.org/pep-0011/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0011.rst
-source_commit: 6edbbc7362dfdcab0c2c88babfe4b277bd4389ef
+source_commit: a119b7664b103ac282b909e3be2ecda8a42b2d58
 ---
 
 # Abstract
@@ -100,7 +100,7 @@ first release candidate, it will be listed as unsupported in this PEP.
   --------------------------- -------------------- ------------------------------------------------------
   aarch64-unknown-linux-gnu   glibc, clang         Victor Stinner, Gregory P. Smith
   aarch64-pc-windows-msvc                          Steve Dower, Diego Russo, Chris Eibl
-  wasm32-unknown-wasip1       WASI SDK, Wasmtime   Brett Cannon, Michael Droettboom, Savannah Ostrowski
+  wasm32-unknown-wasip3       WASI SDK, Wasmtime   Brett Cannon, Michael Droettboom, Savannah Ostrowski
   x86_64-apple-darwin         macOS, clang         Sam Gross, Barry Warsaw, Ronald Oussoren
   x86_64-unknown-linux-gnu    glibc, clang         Victor Stinner, Gregory P. Smith
 

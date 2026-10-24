@@ -5,7 +5,6 @@ author:
 - Barry Warsaw <barry@python.org>
 - Donald Stufft <donald@stufft.io>
 - Ee Durbin <ee@python.org>
-pep_delegate: Dustin Ingram <di@python.org>
 discussions_to: https://discuss.python.org/t/pep-694-pypi-upload-api-2-0-round-2/101483
 status: Draft
 type: Standards Track
@@ -23,7 +22,7 @@ post_history:
 python_status: Draft
 url: https://peps.python.org/pep-0694/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0694.rst
-source_commit: 1e6ea8ab56c0ddca31a2c3d5786f111c02fd4fb6
+source_commit: a5b8dab9c5d240337c656b0ebcf8cfcfa91c7cad
 ---
 
 # Abstract

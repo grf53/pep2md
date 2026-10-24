@@ -3,7 +3,6 @@ pep: 711
 title: 'PyBI: a standard format for distributing Python Binaries'
 author:
 - Nathaniel J. Smith <njs@pobox.com>
-pep_delegate: TODO
 discussions_to: https://discuss.python.org/t/pep-711-pybi-a-standard-format-for-distributing-python-binaries/25547
 status: Draft
 type: Standards Track
@@ -14,7 +13,7 @@ post_history:
 python_status: Draft
 url: https://peps.python.org/pep-0711/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0711.rst
-source_commit: 194214297e1f27b11fdc1b664932724644fef69b
+source_commit: 8083bae775adf8abadca3e69a1c7c6676881a0c2
 ---
 
 # Abstract

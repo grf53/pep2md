@@ -4,7 +4,6 @@ title: Index support for Trusted Publishing
 author:
 - William Woodruff <william@yossarian.net>
 sponsor: Donald Stufft <donald@stufft.io>
-pep_delegate: Donald Stufft <donald@stufft.io>
 discussions_to: https://discuss.python.org/t/104027
 status: Draft
 type: Standards Track
@@ -16,7 +15,7 @@ post_history:
 python_status: Draft
 url: https://peps.python.org/pep-0807/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0807.rst
-source_commit: 145365370be6ced6ce004109399f7e864e3e3433
+source_commit: 55c88bcf9d0d07ed393ccce35f382afb7adea2c5
 ---
 
 # Abstract

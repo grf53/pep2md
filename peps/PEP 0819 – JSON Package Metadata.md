@@ -3,7 +3,6 @@ pep: 819
 title: JSON Package Metadata
 author:
 - Emma Harper Smith <emma@python.org>
-pep_delegate: Paul Moore
 discussions_to: https://discuss.python.org/t/105558
 status: Draft
 type: Standards Track
@@ -14,7 +13,7 @@ post_history:
 python_status: Draft
 url: https://peps.python.org/pep-0819/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0819.rst
-source_commit: 32da4bfd37106ffe4d486d218d8f71c7974c07f2
+source_commit: 28958e540757cf04eee4ba88322d0825fb3dc306
 ---
 
 # Abstract

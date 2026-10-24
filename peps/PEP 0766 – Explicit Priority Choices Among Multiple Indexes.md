@@ -4,7 +4,6 @@ title: Explicit Priority Choices Among Multiple Indexes
 author:
 - Michael Sarahan <msarahan@gmail.com>
 sponsor: Barry Warsaw <barry@python.org>
-pep_delegate: Paul Moore <p.f.moore@gmail.com>
 discussions_to: https://discuss.python.org/t/pep-for-handling-multiple-indexes-index-priority/71589
 status: Draft
 type: Informational
@@ -15,7 +14,7 @@ post_history:
 python_status: Draft
 url: https://peps.python.org/pep-0766/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0766.rst
-source_commit: b1e22e78c9205534925f33b6338c74d24f81fc4f
+source_commit: a0175375725df4ca15c0a7bd41f32344341e7d26
 ---
 
 # Abstract

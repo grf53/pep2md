@@ -4,7 +4,6 @@ title: Recording the provenance of installed packages
 author:
 - Fridolín Pokorný <fridolin.pokorny at gmail.com>
 sponsor: Donald Stufft <donald@stufft.io>
-pep_delegate: Paul Moore <p.f.moore@gmail.com>
 discussions_to: https://discuss.python.org/t/pep-710-recording-the-provenance-of-installed-packages/25428
 status: Draft
 type: Standards Track
@@ -18,7 +17,7 @@ post_history:
 python_status: Draft
 url: https://peps.python.org/pep-0710/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0710.rst
-source_commit: 98b99dcabe388303bb165582410d1c61faf2147d
+source_commit: b7178390acab2f4912d313b7a1ae61012f37a795
 ---
 
 # Abstract

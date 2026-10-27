@@ -11,7 +11,7 @@ python_version: '3.15'
 python_status: Active
 url: https://peps.python.org/pep-0790/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0790.rst
-source_commit: 607b1fcb74f8e39591716cd5075dca8b3c305cde
+source_commit: 3d782251f35406c1ae561c3308ca0ae1cc016cf9
 ---
 
 # Abstract
@@ -57,20 +57,25 @@ Actual:
 
 ## Bugfix releases
 
+Actual:
+
+- 3.15.1: Wednesday, 2026-10-21
+- 3.15.2: Monday, 2026-10-26
+
 Expected:
 
-- 3.15.1: Tuesday, 2026-12-01
-- 3.15.2: Tuesday, 2027-02-02
-- 3.15.3: Tuesday, 2027-04-06
-- 3.15.4: Tuesday, 2027-06-01
-- 3.15.5: Tuesday, 2027-08-03
-- 3.15.6: Tuesday, 2027-10-05
-- 3.15.7: Tuesday, 2027-12-07
-- 3.15.8: Tuesday, 2028-02-01
-- 3.15.9: Tuesday, 2028-04-04
-- 3.15.10: Tuesday, 2028-06-06
-- 3.15.11: Tuesday, 2028-08-01
-- 3.15.12: Tuesday, 2028-10-03 (Final regular bugfix release with binary
+- 3.15.3: Tuesday, 2026-12-01
+- 3.15.4: Tuesday, 2027-02-02
+- 3.15.5: Tuesday, 2027-04-06
+- 3.15.6: Tuesday, 2027-06-01
+- 3.15.7: Tuesday, 2027-08-03
+- 3.15.8: Tuesday, 2027-10-05
+- 3.15.9: Tuesday, 2027-12-07
+- 3.15.10: Tuesday, 2028-02-01
+- 3.15.11: Tuesday, 2028-04-04
+- 3.15.12: Tuesday, 2028-06-06
+- 3.15.13: Tuesday, 2028-08-01
+- 3.15.14: Tuesday, 2028-10-03 (Final regular bugfix release with binary
   installers)
 
 ## Source-only security fix releases

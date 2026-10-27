@@ -18,7 +18,7 @@ post_history:
 python_status: Active
 url: https://peps.python.org/pep-0001/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0001.rst
-source_commit: e90d7ff8787fdfd4ac60d4b749ff712b953723b9
+source_commit: 5eba57d776beefda87e582287017ed38b6bf2609
 ---
 
 # What is a PEP?
@@ -161,22 +161,25 @@ to address initial concerns about the proposal.
 
 ## Submitting a PEP
 
-Following the above initial discussion, the workflow varies based on
-whether any of the PEP\'s co-authors are core developers. If one or more
-of the PEP\'s co-authors are core developers, they are responsible for
-following the process outlined below. Otherwise (i.e. none of the
-co-authors are core developers), then the PEP author(s) will need to
-find a sponsor for the PEP.
+Following the above initial discussion, a *sponsor* must be found for
+the PEP. If one or more of the PEP\'s co-authors qualify as a sponsor,
+they are responsible for following the process outlined below. Otherwise
+(i.e. none of the co-authors are sponsors), the PEP author(s) will need
+to find a sponsor for the PEP.
 
-Ideally, a core developer sponsor is identified, but non-core sponsors
-may also be selected with the approval of the Steering Council. Members
-of the GitHub \"PEP editors\" team and members of the Typing Council
-(`729`{.interpreted-text role="pep"}) are pre-approved to be sponsors.
+People approved to be PEP sponsors are:
+
+- Members of the Python core team
+- Members of the GitHub \"PEP editors\" team
+- Members of the Typing Council (`729`{.interpreted-text role="pep"})
+- Members of the Packaging Council (`772`{.interpreted-text role="pep"})
+- People appointed by the Steering or Packaging Councils
+
 The sponsor\'s job is to provide guidance to the PEP author to help them
 through the logistics of the PEP process (somewhat acting like a
 mentor). Being a sponsor does **not** disqualify that person from
-becoming a co-author or PEP-Delegate later on (but not both). The
-sponsor of a PEP is recorded in the \"Sponsor:\" field of the header.
+becoming a co-author or PEP-Delegate later on. The sponsor of a PEP is
+recorded in the \"Sponsor:\" field of the header.
 
 Once the sponsor or the core developer(s) co-authoring the PEP deem the
 PEP ready for submission, the proposal should be submitted as a draft

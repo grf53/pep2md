@@ -17,7 +17,7 @@ post_history:
 python_status: Draft
 url: https://peps.python.org/pep-0832/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0832.rst
-source_commit: b26a876c039e8e3609f1458dd2e24a41e5645ce2
+source_commit: 74d00d2154ef0dc0b62692e26a4a08c700a8b332
 ---
 
 # Abstract
@@ -96,17 +96,16 @@ logical paths should be resolved to their physical equivalent before
 use.
 
 Instead of a directory containing a virtual environment, the root of a
-project MAY have a `.venv`{.interpreted-text role="file"} redirect file.
-This file acts as a pointer to where the (current) virtual environment
-to be used for the project is located (which, just like a
-`.venv`{.interpreted-text role="file"} directory, can be a logical or
-pysical path). This virtual environment may not be the only environment
-associated with the project, but it is considered the preferred virtual
-environment to use *at the moment* by other tools. The tool managing the
-virtual environment SHOULD update any `.venv`{.interpreted-text
-role="file"} redirect file as appropriate when the tool or the user
-desire a different virtual environment to be used by default by other
-tools.
+project MAY have a `.venv`{.interpreted-text role="file"} redirect file
+(which, just like a `.venv`{.interpreted-text role="file"} directory,
+can be a logical or pysical path). This file acts as a pointer to where
+the (current) virtual environment to be used for the project is located.
+This virtual environment may not be the only environment associated with
+the project, but it is considered the preferred virtual environment to
+use *at the moment* by other tools. The tool managing the virtual
+environment SHOULD update any `.venv`{.interpreted-text role="file"}
+redirect file as appropriate when the tool or the user desires a
+different virtual environment to be used by default by other tools.
 
 Tools looking for a virtual environment SHOULD look for either a
 `.venv`{.interpreted-text role="file"} directory or a
@@ -121,11 +120,17 @@ and MUST be ignored. An empty file or one that only contains a newline
 is considered invalid.
 
 The line in the `.venv`{.interpreted-text role="file"} redirect file
-MUST point to a directory containing a virtual environment when being
-written. The path MAY use POSIX path separators\-- `/` \--regardless of
-what the operating system\'s native path separator is. The path MAY be
-relative, and if so MUST be relative to the directory containing the
-`.venv`{.interpreted-text role="file"} file.
+MUST point to a directory containing a virtual environment at the time
+of being written. The path MAY use POSIX path separators\-- `/`
+\--regardless of what the operating system\'s native path separator is.
+The path MAY be relative; IF the path is relative THEN it MUST be
+resolved relative to the directory containing the
+`.venv`{.interpreted-text role="file"} redirect file based on the
+file\'s physical path (e.g., for a redirect file with a logical path of
+`/my/.venv`{.interpreted-text role="file"} and a physical path of
+`/some/project/.venv`{.interpreted-text role="file"}, the file contents
+of `../target` resolves to `/some/target`{.interpreted-text
+role="file"}).
 
 With regard to committing a `.venv`{.interpreted-text role="file"}
 redirect file to version control, it MAY be done when the location of
@@ -191,8 +196,8 @@ virtual environment to use. That\'s the purpose of the
 hidden as it isn\'t a critical aspect of the project (environments
 themselves can be viewed as implementation details). The file name was
 chosen to match the `.venv`{.interpreted-text role="file"} directory
-name as the purpose of a path with that name is already well known. As
-well, it is already broadly ignored by projects, so it won\'t lead to
+name as the purpose of a directory with that name is already well-known.
+As well, it is already broadly ignored by projects, so it won\'t lead to
 projects suddenly having a new file that they may accidentally commit.
 
 The `.venv`{.interpreted-text role="file"} redirect file format is
@@ -231,6 +236,14 @@ record a name or ownership of the virtual environment, but e.g., virtual
 environments have the prompt recorded in `pyvenv.cfg`{.interpreted-text
 role="file"}, so it does not need to be listed separately from the
 environment where it may become stale.
+
+The discussion identified ambiguity about resolving relative paths in a
+`.venv`{.interpreted-text role="file"} redirect file when logical paths
+for the redirect file itself are involved. A logical path could refer to
+the redirect file itself or to any part of its containing directory. To
+solve the ambiguity, the path to the redirect file MUST be resolved to a
+physical path before any relative path contained in the redirect file is
+resolved.
 
 While some projects may have multiple virtual environments available,
 the concept of a current or default virtual environment is a constant.
@@ -490,6 +503,9 @@ on the initial draft of this PEP.
 
 # Change History
 
+- 26-Oct-2026
+  - Require relative paths in a redirect file to be resolved relative to
+    the directory of the physical path of the redirect file
 - 24-Sep-2026
   - Clarify `.venv`{.interpreted-text role="file"} redirect files can be
     logical or physical paths just like `.venv`{.interpreted-text

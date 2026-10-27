@@ -11,7 +11,7 @@ python_version: '3.13'
 python_status: Active
 url: https://peps.python.org/pep-0719/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0719.rst
-source_commit: 0220c6a46004ddea358906df52c84756c7c69a99
+source_commit: d345017474dec359f4c0a77affc3bc9e3712022d
 ---
 
 # Abstract
@@ -78,6 +78,9 @@ Actual:
 ## Source-only security fix releases
 
 Provided irregularly on an as-needed basis until October 2029.
+
+- 3.13.17: Wednesday, 2026-10-21 (exceptionally with binary installers)
+- 3.13.18: Sunday, 2026-10-25
 
 ## 3.13 Lifespan
 

@@ -16,7 +16,7 @@ post_history:
 python_status: Draft
 url: https://peps.python.org/pep-0813/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0813.rst
-source_commit: 74eee19bc12da0334e6587d65c4bad44f6565bb4
+source_commit: 5d115de6d9218fd6d6b8de51f088b69967017fa2
 ---
 
 # Abstract
@@ -600,7 +600,7 @@ with it:
 
 For example:
 
-``` {.pycon force=""}
+``` py813-console
 >>> from string.templatelib import convert
 >>> basses = ['precision', 'jazz', 'stingray']
 >>> printer = pprint.Printer(width=20)
@@ -776,7 +776,7 @@ class Bass:
 
 Now let\'s create a couple of instances and pretty print them:
 
-``` {.pycon force=""}
+``` py813-console
 >>> precision = Bass(4, 'split coil P', active=False)
 >>> stingray = Bass(5, 'humbucker', active=True)
 
@@ -792,7 +792,7 @@ Bass(4, pickups='split coil P')
 For more complex objects, `!p` can help make debugging output more
 readable:
 
-``` {.pycon force=""}
+``` py813-console
 >>> import os
 >>> print(os.pathconf_names)
 {'PC_ASYNC_IO': 17, 'PC_CHOWN_RESTRICTED': 7, 'PC_FILESIZEBITS': 18, 'PC_LINK_MAX': 1, 'PC_MAX_CANON': 2, 'PC_MAX_INPUT': 3, 'PC_NAME_MAX': 4, 'PC_NO_TRUNC': 8, 'PC_PATH_MAX': 5, 'PC_PIPE_BUF': 6, 'PC_PRIO_IO': 19, 'PC_SYNC_IO': 25, 'PC_VDISABLE': 9, 'PC_MIN_HOLE_SIZE': 27, 'PC_ALLOC_SIZE_MIN': 16, 'PC_REC_INCR_XFER_SIZE': 20, 'PC_REC_MAX_XFER_SIZE': 21, 'PC_REC_MIN_XFER_SIZE': 22, 'PC_REC_XFER_ALIGN': 23, 'PC_SYMLINK_MAX': 24}
@@ -825,7 +825,7 @@ os.pathconf_names = {
 In f-strings, the `!p` conversion specifier also accepts a printer, such
 as a `pprint.Printer` with its own options:
 
-``` {.pycon force=""}
+``` py813-console
 >>> narrow = pprint.Printer(width=30)
 >>> print(f'{stingray!p:{narrow}}')
 Bass(
@@ -844,7 +844,7 @@ Bass(5,
 A printer can also be a plain function that takes the object and returns
 its lines:
 
-``` {.pycon force=""}
+``` py813-console
 >>> def slappa(da: Bass) -> Iterator[str]:
 ...     yield 'All about that bass'
 
@@ -855,7 +855,7 @@ precision=All about that bass
 Since tuples are read according to the current section, a positional
 tuple value needs nothing special:
 
-``` {.pycon force=""}
+``` py813-console
 >>> class Things:
 ...     def __pprint__(self):
 ...         yield (1, 2)
@@ -882,7 +882,7 @@ class Node:
         yield 'children', self.children, []
 ```
 
-``` {.pycon force=""}
+``` py813-console
 >>> tree = Node('root', [Node('left', [Node('leaf')]), Node('right')])
 >>> print(f'{tree!p:{pprint.Printer(width=60)}}')
 Node(
@@ -910,7 +910,7 @@ class Note:
         yield 'beats', self.beats, 1
 ```
 
-``` {.pycon force=""}
+``` py813-console
 >>> print(f"{Note('E', beats=2)!p}")
 <Note pitch='E' beats=2>
 >>> print(f"{Note('A')!p}")
@@ -938,7 +938,7 @@ class Table:
 The default printer ignores the hint, so its output still agrees with
 `repr()`:
 
-``` {.pycon force=""}
+``` py813-console
 >>> print(f"{Table(['Bass', 'Strings'], [['Precision', 4], ['Stingray', 5]])!p}")
 Table(headers=['Bass', 'Strings'], rows=[['Precision', 4], ['Stingray', 5]])
 ```
@@ -972,7 +972,7 @@ class Emphasis:
         yield self.value
 ```
 
-``` {.pycon force=""}
+``` py813-console
 >>> notes = [Note('E'), Emphasis(Note('A')), Note('D')]
 >>> print(f'{notes!p}')
 [<Note pitch='E'>, <Note pitch='A'>, <Note pitch='D'>]

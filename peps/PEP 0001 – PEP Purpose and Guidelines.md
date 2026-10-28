@@ -18,7 +18,7 @@ post_history:
 python_status: Active
 url: https://peps.python.org/pep-0001/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0001.rst
-source_commit: 5eba57d776beefda87e582287017ed38b6bf2609
+source_commit: d7ffb3747097d8433b74e3bfe3601d9d15648fac
 ---
 
 # What is a PEP?
@@ -159,7 +159,7 @@ appropriate venue mentioned above. This gives the author a chance to
 flesh out the draft PEP to make properly formatted, of high quality, and
 to address initial concerns about the proposal.
 
-## Submitting a PEP
+## Finding a sponsor
 
 Following the above initial discussion, a *sponsor* must be found for
 the PEP. If one or more of the PEP\'s co-authors qualify as a sponsor,
@@ -180,6 +180,8 @@ through the logistics of the PEP process (somewhat acting like a
 mentor). Being a sponsor does **not** disqualify that person from
 becoming a co-author or PEP-Delegate later on. The sponsor of a PEP is
 recorded in the \"Sponsor:\" field of the header.
+
+## Submitting a PEP
 
 Once the sponsor or the core developer(s) co-authoring the PEP deem the
 PEP ready for submission, the proposal should be submitted as a draft

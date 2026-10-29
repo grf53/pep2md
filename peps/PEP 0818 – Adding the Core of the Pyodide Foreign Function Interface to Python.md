@@ -15,7 +15,7 @@ post_history:
 python_status: Draft
 url: https://peps.python.org/pep-0818/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0818.rst
-source_commit: 525d8ec8cfa0210fe57603715ab3684d1190d406
+source_commit: 22919ea03b23094c439c98bb80a4b29b810d92e8
 ---
 
 # Abstract
@@ -68,8 +68,11 @@ actual work requires making calls into JavaScript: for example, it is
 required to display content to the screen, to receive user input, to
 handle events, to access databases, etc. For instance, once Python has a
 JavaScript foreign function interface, it will be possible to support
-`urllib` on Emscripten. Downstream, supporting `urllib3`, `aiohttp`, and
-`httpx` requires the foreign function interface.
+`urllib` on Emscripten. Downstream, supporting `urllib3`, `aiohttp`,
+`httpx`, `matplotlib`, `bokeh`, and other projects that do I/O requires
+the foreign function interface. (By itself, this PEP is only enough to
+support asynchronous I/O. All of `urllib`, `urllib3` and `requests`
+expose synchronous APIs and require stack switching to support.)
 
 The fact that the Pyodide foreign function interface is coupled to
 Pyodide creates problems for other Emscripten-CPython distributions. For
@@ -81,8 +84,12 @@ incompatibilities. For this reason, the Emscripten-force maintainers
 strongly support adding Pyodide\'s interface to CPython.
 
 In order to keep the length of this PEP reasonable, we focus on the
-\"core\" of the foreign function interface. The JavaScript interface for
-managing the Python runtime is left to a future PEP.
+\"core\" of the foreign function interface. The following things are
+left to future proposals:
+
+- A JavaScript interface for managing the Python interpreter lifecycle
+- Stack switching support, and in particular support for blocking for
+  the completion of an awaitable (e.g., `run_until_complete()`)
 
 # Rationale
 
@@ -1450,6 +1457,12 @@ These are like normal futures and tasks except that they also implement
 the JavaScript Promise methods `then()`, `catch()` and `finally_()`.
 This is so that code can work consistently regardless of whether they
 have a `Promise`, a `WebFuture` or a `WebTask`.
+
+In order to implement `run_until_complete()`, we need stack switching
+support in the runtime. Downstream, Pyodide has implemented stack
+switching support and `run_until_complete()` works as expected. Until we
+have such stack switching support, `run_until_complete()` will raise a
+`NotImplementedError`. This will be the topic of a followup proposal.
 
 ### Adapting from a Python awaitable to a JavaScript awaitable
 

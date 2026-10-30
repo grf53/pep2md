@@ -17,7 +17,7 @@ post_history:
 python_status: Draft
 url: https://peps.python.org/pep-0832/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0832.rst
-source_commit: 74d00d2154ef0dc0b62692e26a4a08c700a8b332
+source_commit: 13a6046a2e6fe735936fb9b0402e839c4b0c9c4c
 ---
 
 # Abstract
@@ -98,7 +98,7 @@ use.
 Instead of a directory containing a virtual environment, the root of a
 project MAY have a `.venv`{.interpreted-text role="file"} redirect file
 (which, just like a `.venv`{.interpreted-text role="file"} directory,
-can be a logical or pysical path). This file acts as a pointer to where
+can be a logical or physical path). This file acts as a pointer to where
 the (current) virtual environment to be used for the project is located.
 This virtual environment may not be the only environment associated with
 the project, but it is considered the preferred virtual environment to

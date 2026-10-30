@@ -14,7 +14,7 @@ post_history:
 python_status: Draft
 url: https://peps.python.org/pep-0851/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0851.rst
-source_commit: b5c411f07a4da9effb12a42fdcd50c4200bb1cae
+source_commit: e2b0c2bd7f1d05dbf3381f44d27f5cfe5162685d
 ---
 
 # Abstract
@@ -22,9 +22,9 @@ source_commit: b5c411f07a4da9effb12a42fdcd50c4200bb1cae
 Add `list.discard(x)`, which removes the first item equal to *x* if one
 is present and does nothing otherwise, returning whether an item was
 removed. It is the non-raising counterpart to
-`list.remove`{.interpreted-text role="meth"}, as
-`set.discard`{.interpreted-text role="meth"} is to
-`set.remove`{.interpreted-text role="meth"}.
+`list.remove`{.interpreted-text role="meth"}, which currently has none.
+The name is taken from `set.discard`{.interpreted-text role="meth"},
+which already means \"remove if present\" in Python.
 
 # Motivation
 
@@ -86,17 +86,19 @@ method for consistency.
 
 # Rationale
 
-The name follows the `remove()` / `discard()` distinction already made
-by `set`, where `discard()` is the variant that tolerates a missing
-item. It has been raised that after `s.discard(x)` the test `x not in s`
+Symmetry with `set`{.interpreted-text role="class"} is not the goal. The
+motivation is the missing non-raising form of
+`list.remove`{.interpreted-text role="meth"}. `set`{.interpreted-text
+role="class"} only supplies the name, since
+`set.discard`{.interpreted-text role="meth"} already means \"remove if
+present\" in Python.
+
+It has been raised that after `s.discard(x)` the test `x not in s`
 holds, while after `lst.discard(x)` it need not if *x* appears more than
-once. This is a real difference. `discard()` deliberately shares the
-search and removal semantics of `list.remove`{.interpreted-text
-role="meth"} rather than those of `set.discard`{.interpreted-text
-role="meth"}, and the documentation for `list.discard()` in the
-reference implementation states this explicitly. The name remains the
-least surprising choice as users who know sets can apply that knowledge
-directly.
+once. That is a property of sets, not of `discard()`, and
+`list.remove`{.interpreted-text role="meth"} has the same behaviour
+today. `discard()` follows `remove()` here, and its will documentation
+clearly say so.
 
 Unlike `set.discard`{.interpreted-text role="meth"}, which returns
 `None`, a bool is returned. This costs nothing, since the implementation

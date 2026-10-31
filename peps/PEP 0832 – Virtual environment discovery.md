@@ -6,8 +6,8 @@ author:
 discussions_to: https://discuss.python.org/t/106998
 status: Draft
 type: Standards Track
+topic: Packaging
 created: 19-Jan-2026
-python_version: '3.15'
 post_history:
 - '`15-Apr-2026 <https://discuss.python.org/t/106998>`__'
 - '`23-Apr-2026 <https://discuss.python.org/t/106998/52>`__'
@@ -17,7 +17,7 @@ post_history:
 python_status: Draft
 url: https://peps.python.org/pep-0832/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0832.rst
-source_commit: 13a6046a2e6fe735936fb9b0402e839c4b0c9c4c
+source_commit: 52810456da3630d046c314cd0b406ffbf0438f6f
 ---
 
 # Abstract
@@ -312,6 +312,7 @@ information privately, but with permission to state publicly.
   7.  [library-skills](https://discuss.python.org/t/106998/34)
       (Sebastián Ramírez)
   8.  [uv](https://discuss.python.org/t/106998/159) (Tomasz Kramkowski)
+  9.  Nox (Henry Schreiner)
 - Opposes
   1.  Hatch (Cary Hawkins)
 

@@ -16,7 +16,7 @@ post_history:
 python_status: Active
 url: https://peps.python.org/pep-0011/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0011.rst
-source_commit: a119b7664b103ac282b909e3be2ecda8a42b2d58
+source_commit: b4686d118b259264c5782abf0567d3593123af38
 ---
 
 # Abstract
@@ -115,8 +115,8 @@ first release candidate, it will be listed as unsupported in this PEP.
 +--------------------------------+----------------------+----------------------+
 | Target Triple                  | Notes                | Contacts             |
 +================================+======================+======================+
-| aarch64-linux-android          |                      | Russell Keith-Magee, |
-|                                |                      | Petr Viktorin        |
+| aarch64-linux-android          |                      | Malcolm Smith,       |
+|                                |                      | Russell Keith-Magee  |
 +--------------------------------+----------------------+----------------------+
 | arm64-apple-ios                | iOS on device        | Russell Keith-Magee, |
 |                                |                      | Ned Deily            |
@@ -144,8 +144,8 @@ first release candidate, it will be listed as unsupported in this PEP.
 +--------------------------------+----------------------+----------------------+
 | wasm32-unknown-emscripten      | emcc                 | Russell Keith-Magee  |
 +--------------------------------+----------------------+----------------------+
-| x86_64-linux-android           |                      | Russell Keith-Magee, |
-|                                |                      | Petr Viktorin        |
+| x86_64-linux-android           |                      | Malcolm Smith,       |
+|                                |                      | Russell Keith-Magee  |
 +--------------------------------+----------------------+----------------------+
 | x86_64-unknown-freebsd         | BSD libc, clang      | Victor Stinner       |
 +--------------------------------+----------------------+----------------------+

@@ -14,7 +14,7 @@ post_history:
 python_status: Draft
 url: https://peps.python.org/pep-0824/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0824.rst
-source_commit: 00476d240331a33023bc7665f7d18f56c5f3bf32
+source_commit: 549ba3fb3932a2496a0f74d785d1abdc4a99c718
 ---
 
 # Abstract
@@ -176,19 +176,30 @@ right-hand side expression is evaluated and returned instead.
 _t if ((_t := a) is not None) else b
 ```
 
+### Chaining {#spec-chaining}
+
+An expression like `a ?? b ?? c ?? d` evaluates its subexpressions (`a`,
+`b`, etc.) from left to right until it finds a value that is not `None`
+or reaches the end. If all values are `None`, the result is `None`.
+
+Like `and` and `or`, `??` is **associative**: `(a ?? b) ?? c` has the
+same meaning as `a ?? (b ?? c)`.
+
 ### Precedence
 
 The precedence of `??` will be lower than `or` but higher than
 conditional expressions. Parentheses can be added as necessary to modify
-the precedence of individual expressions. A few examples of how implicit
-parentheses would be placed:
+the precedence of individual expressions. Setting the precedence like
+this means `or` can easily be replaced with `??` where appropriate
+without any surprises. A few examples of how implicit parentheses would
+be placed:
 
 ``` py824
 # x or y ?? 2
 (x or y) ?? 2
 
-# "Hello" if x ?? True else 0
-"Hello" if (x ?? True) else 0
+# a ?? b if c else d
+(a ?? b) if c else d
 ```
 
 ### AST changes
@@ -230,6 +241,9 @@ assignment of the right-hand side are skipped.
 if a is None:
     a = b
 ```
+
+This has the same effect as `a = a ?? b`, except that there is no
+assignment when `a` is not `None`.
 
 ### Subexpression caching
 
@@ -313,14 +327,14 @@ evaluates the target only once. For example, in `a[index()] ??= b`,
 `index()` is called only once. The right-hand side is evaluated only
 when the target\'s value is `None`.
 
-## Chaining
+## Chaining {#how-to-chaining}
 
 An expression like `a ?? b ?? c ?? d` evaluates its subexpressions (`a`,
 `b`, etc.) from left to right until it finds a value that is not `None`
 or reaches the end. If all values are `None`, the result is `None`.
 
-Like `or`, `??` is associative: `(a ?? b) ?? c` has the same meaning as
-`a ?? (b ?? c)`.
+Like `and` and `or`, `??` is **associative**: `(a ?? b) ?? c` has the
+same meaning as `a ?? (b ?? c)`.
 
 ## Operator precedence
 
@@ -414,7 +428,7 @@ An online demo can be tested at
 \"`None`-coalescing\" operators have their own use cases, the
 \"`None`-aware access\" operators were moved into a separate document,
 see `823`{.interpreted-text role="pep"}. Both proposals can be adopted
-independently of each other.
+independently of each other, though they do work well together.
 
 ## Other conditional assignment operators
 
@@ -424,6 +438,22 @@ be extended to cover `and=` / `or=`. This would match the existing
 conditional assignment operators `&&=` and `||=` in other programming
 languages such as ECMAScript (a.k.a. JavaScript)[^13] [^14], Ruby[^15]
 and Perl[^16].
+
+## Add `operator.coalesce`
+
+It was suggested to add a new `coalesce` function to the `operator`
+module. This was deferred since the other boolean operators `and` and
+`or` do not have a corresponding function either yet.
+`operator.and_`{.interpreted-text role="py:func"} and
+`operator.or_`{.interpreted-text role="py:func"} exist but those map to
+the binary operations `&` and `|`.
+
+## Add a combined `??:=` operator
+
+Another idea was to add an operator which combines `??=` and `:=` into
+one: `??:=`. It could be used like an assignment expression but would
+only assign values if the target is `None`. This is outside the scope of
+this PEP.
 
 # Rejected Ideas
 
@@ -499,6 +529,17 @@ This was rejected since other operators with multiple steps, for example
 issue, existing synchronization primitives like locks should be used
 instead.
 
+## Add protocol to customize coalesce behavior
+
+It was discussed to make the coalesce behavior customizable via a
+protocol.
+
+One of the advantages of `??` is that it is limited to only `None`. This
+avoids the ambiguity that would come with using `or` where it is not
+always immediately obvious if a value will be truthy, especially
+considering that objects can define a custom
+`object.__bool__`{.interpreted-text role="py:meth"} method.
+
 # Common objections
 
 ## Just use a conditional expression
@@ -571,9 +612,9 @@ default types at all.
 ## Use custom sentinels instead of `None`
 
 In Python 3.15, `661`{.interpreted-text role="pep"} added the option to
-define custom sentinels using `sentinel(...)`. This addressed an issue
-in cases where `None` itself is a valid value and thus could not be used
-as sentinel.
+define custom sentinels using `sentinel`{.interpreted-text
+role="py:class"}. This addressed an issue in cases where `None` itself
+is a valid value and thus could not be used as sentinel.
 
 In general though, `None` will still be preferred if a sentinel is
 needed, simply because it already exists for that exact purpose and is
@@ -601,6 +642,13 @@ cases like overwriting `None` values inside an object, as shown in
 
 # Change History
 
+- 31-Oct-2026:
+  - Added section on [Chaining](#spec-chaining) to the specification.
+  - Added [Add operator.coalesce](#add-operator.coalesce) and [Add a
+    combined ??:= operator](#add-a-combined-operator) as deferred ideas.
+  - Added [Add protocol to customize coalesce
+    behavior](#add-protocol-to-customize-coalesce-behavior) as rejected
+    idea.
 - 20-Oct-2026: Turned [How to Teach This](#how-to-teach-this) into a
   mini-tutorial.
 

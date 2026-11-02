@@ -11,10 +11,11 @@ created: 20-Sep-2026
 python_version: '3.16'
 post_history:
 - '`22-Sep-2026 <https://discuss.python.org/t/pep-823-none-aware-access-operators/109159>`__'
+- '`01-Nov-2026 <https://discuss.python.org/t/pep-823-none-aware-access-operators/109159/117>`__'
 python_status: Draft
 url: https://peps.python.org/pep-0823/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0823.rst
-source_commit: 1381d613e67613213839948cc945deca09ffa887
+source_commit: 78198a86f397f7b05a2f9feed83a86215805464d
 ---
 
 # Abstract
@@ -1368,7 +1369,7 @@ other languages while still respecting the norms in Python itself.
   - Added [None-aware binary operators](#none-aware-binary-operators)
     and [Add ? as shortcut for is not
     None](#add-as-shortcut-for-is-not-none) as rejected ideas.
-  - Mention `661`{.interpreted-text role="pep"} Sentinel Values in
+  - Mentioned `661`{.interpreted-text role="pep"} Sentinel Values in
     [No-Value Protocol](#no-value-protocol) and added [Use custom
     sentinels instead of None](#use-custom-sentinels-instead-of-none) to
     common objections.

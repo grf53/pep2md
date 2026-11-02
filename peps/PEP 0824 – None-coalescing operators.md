@@ -11,10 +11,11 @@ created: 20-Sep-2026
 python_version: '3.16'
 post_history:
 - '`22-Sep-2026 <https://discuss.python.org/t/pep-824-none-coalescing-operators/109161>`__'
+- '`01-Nov-2026 <https://discuss.python.org/t/pep-824-none-coalescing-operators/109161/74>`__'
 python_status: Draft
 url: https://peps.python.org/pep-0824/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0824.rst
-source_commit: 549ba3fb3932a2496a0f74d785d1abdc4a99c718
+source_commit: c9989050a198486f85edb9755bdd78e9e300f201
 ---
 
 # Abstract

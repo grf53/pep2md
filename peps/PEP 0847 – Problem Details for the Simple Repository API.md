@@ -17,7 +17,7 @@ post_history:
 python_status: Draft
 url: https://peps.python.org/pep-0847/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0847.rst
-source_commit: 2a34ced28c47232a8dceeab8a46a7a5dad825651
+source_commit: 297481fe3f616d33527af2bfc74dec28026c068a
 ---
 
 # Abstract
@@ -297,7 +297,9 @@ Another option is to diverge from `9457`{.interpreted-text role="rfc"},
 and pick (or invent) another error format. An argument in favor of this
 is specificity: a custom error format could, for example, provide
 dedicated error codes that communicate failure modes that are
-common/shared across many index implementations and hosts.
+common/shared across many index implementations and hosts. Similarly, a
+custom error format could represent multiple errors from an index at
+once.
 
 We consider this option unsuitable for two reasons:
 
@@ -307,9 +309,11 @@ We consider this option unsuitable for two reasons:
     authorization and authentication error states.
 2.  `9457`{.interpreted-text role="rfc"} is *already* extensible, and a
     future PEP *could* added shared error codes as a well-known
-    extension in the future. In other words, any foreseeable benefit
-    from a custom format is already subsumable within the Problem
-    Details format.
+    extension in the future. Similarly, `9457`{.interpreted-text
+    role="rfc"}\'s design enables multiple interior errors as an
+    extension, per `9457#section-3`{.interpreted-text role="rfc"}. In
+    other words, the benefits of a custom format are already provided by
+    the Problem Details format.
 
 # Appendix 1: Problem Details Object Examples {#problem-details-appendix-1}
 

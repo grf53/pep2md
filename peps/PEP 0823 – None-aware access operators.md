@@ -15,7 +15,7 @@ post_history:
 python_status: Draft
 url: https://peps.python.org/pep-0823/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0823.rst
-source_commit: 78198a86f397f7b05a2f9feed83a86215805464d
+source_commit: a1862b132ffca89bab53134d7a91239639bc1d7e
 ---
 
 # Abstract
@@ -429,8 +429,8 @@ SyntaxError: cannot assign to none aware expression
 >>> a?.b.c.d = 1
 File "<python-input-1>", line 1
     a?.b.c.d = 1
-    ^^^^^^^^
-SyntaxError: cannot assign to attribute here. Maybe you meant '==' instead of '='?
+    ^^^^
+SyntaxError: cannot assign to none-aware expression
 ```
 
 This does not apply if the `None`-aware expressions is only part of a

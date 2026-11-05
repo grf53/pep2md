@@ -15,7 +15,7 @@ post_history:
 python_status: Draft
 url: https://peps.python.org/pep-0824/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0824.rst
-source_commit: c9989050a198486f85edb9755bdd78e9e300f201
+source_commit: dcf16321fda9ef167e86fdafe7679c33eaa21631
 ---
 
 # Abstract
@@ -340,9 +340,9 @@ same meaning as `a ?? (b ?? c)`.
 ## Operator precedence
 
 The `??` operator has a lower precedence than `or` and `and`. Thus,
-`a or b ?? c` means `(a or b) ?? c`, and `a ?? b and c` means
-`a ?? (b and c)`. To get the opposite grouping, use `a or (b ?? c)` or
-`(a ?? b) and c`.
+`a ?? b or c` means `a ?? (b or c)`, and `a and b ?? c` means
+`(a and b) ?? c`. To get the opposite grouping, use explicit
+parentheses.
 
 This precedence is a convention. For clarity, we recommend always adding
 parentheses when mixing `??` with `and` or `or`.
@@ -502,9 +502,105 @@ operator is much more closely related to the conditional operators `or`
 and `and` which also short-circuit the expression for truthy and falsy
 values respectively.
 
-Furthermore, setting the precedence between `or` and conditional
-expressions matches other languages which have implemented the operator,
-like JS[^17] and C#[^18].
+Due to their similarities, it is even fair to describe `??` as just a
+specialized variant of `or`. While `or` checks for all falsy values,
+`??` only checks for the narrower `None`. For truthy values and `None`,
+they will output the same:
+
+``` py824-console
+>>> a = None
+>>> a or 2
+2
+>>> a ?? 2
+2
+```
+
+## Use different precedence for `??`
+
+It was discussed what the precedence for `??` should be, in particular
+in relationship to `or`.
+
+Looking at the other modern programming languages which have \"`null`
+coalescing\" operators, two options for the precedence emerge.
+
+1.  A precedence between binary and comparison operators as seen in both
+    Swift[^17] and Kotlin[^18] for their their \"Nil-Coalescing\" and
+    \"Elvis\" operators respectively.
+2.  A precedence between the logical OR and conditional / ternary
+    operators, see C#[^19], Dart[^20] and PHP[^21]. JS / TS[^22] is
+    similar, though parentheses are required when mixing `??` with
+    either `||` or `&&`. (See the next [section]() for more details on
+    that.)
+
+The relationship of the `None`-coalescing operator proposed in this PEP
+to other programming languages is by design. Therefore, it does not make
+sense to choose yet another precedence only for Python.
+
+With the decision to add `??` as a boolean operator, see the rejected
+idea [Add ?? as a binary operator](#add-as-a-binary-operator) for the
+rational, only a precedence close to `and` and `or` makes sense. As
+such, option (1) is rejected.
+
+The `??` operator only handles a subset of values compared to `or`, just
+`None` instead of all falsy values. By assigning a precedence lower than
+`or`, option (2), it is guaranteed that a `not None` but falsy result of
+the more specific check `??` is preserved and does not get overwritten
+by the broader `or` check.
+
+``` py824
+args = {"user_name": ""}  # str or None (if not given as input)
+config = {"default_name": "Alice"}
+
+args["user_name"] ?? config["default_name"] or "Guest"
+```
+
+In the example above the user explicitly supplied an empty string, a
+falsy value, which should be passed on. Assuming a precedence for `??`
+lower than `or`, the expression would short-circuit and return `""`
+directly after evaluating `args["user_name"]` because `"" is not None`.
+Changing the precedence to be equal or higher than `or` would mean that
+`or "Guest"` is evaluated even though a valid value was already
+supplied.
+
+The altered precedence would break the assumption that `??` can
+short-circuit a boolean expression also containing `or` for `not None`
+but falsy values, without explicit parentheses. Thus, a precedence lower
+than `or` is chosen, option (2), see [Precedence](#precedence)
+specification.
+
+## Require parentheses when mixing `??` with `and` and `or`
+
+As explained [before](#use-different-precedence-for), JavaScript
+requires parentheses when mixing `??` with `&&` or `||`. It was
+suggested that Python could do the same.
+
+The PEP acknowledges that combining different boolean operators can be
+confusing and explicitly recommends the use of parentheses for added
+clarity in the [How to teach this](#operator-precedence) section. The
+question to answer therefore is not whether parentheses are useful but
+rather if they should be enforced by the language grammar.
+
+This is rejected. For one, the benefit from strict enforcement would be
+minimal. Not only will both `a ?? b or c` and `a or b ?? c` expressions
+evaluate as a reader expects without having to think about grouping or
+precedence \-- they will short-circuit after each operand if the
+condition is met \-- but developers are likely to add parentheses on
+their own anyway just to make it more obvious. A larger ecosystem trend
+can also be seen in the increasing prevalence of linter and
+auto-formatter rules requiring or outright adding parentheses for
+boolean expressions automatically, e.g. for Ruff RUF021[^23].
+
+Furthermore, strict enforcement would add a new special case compared to
+`and` and `or` which would need to be thought and remembered every time
+instead of the more general recommendation to just always use
+parentheses when mixing any boolean operators, which already exists.
+
+Lastly, while JavaScript requires parentheses, the other languages with
+similar precedence only do so when it is required by their type system.
+Python itself does not require explicit parentheses for any other
+operator either. Even for assignment expressions which almost always
+require parentheses, it is not a strict enforcement but rather a
+necessity created by the low precedence of `:=`.
 
 ## Add `??=` as `AugAssign`
 
@@ -643,6 +739,13 @@ cases like overwriting `None` values inside an object, as shown in
 
 # Change History
 
+- 04-Nov-2026:
+  - Updated [Add ?? as a binary operator](#add-as-a-binary-operator) and
+    added [Use different precedence for
+    ??](#use-different-precedence-for) and [Require parentheses when
+    mixing ?? with and and
+    or](#require-parentheses-when-mixing-with-and-and-or) as rejected
+    ideas.
 - 31-Oct-2026:
   - Added section on [Chaining](#spec-chaining) to the specification.
   - Added [Add operator.coalesce](#add-operator.coalesce) and [Add a
@@ -650,8 +753,8 @@ cases like overwriting `None` values inside an object, as shown in
   - Added [Add protocol to customize coalesce
     behavior](#add-protocol-to-customize-coalesce-behavior) as rejected
     idea.
-- 20-Oct-2026: Turned [How to Teach This](#how-to-teach-this) into a
-  mini-tutorial.
+- 20-Oct-2026: Turned [How to Teach This](##REF##Operator precedence)
+  into a mini-tutorial.
 
 # Copyright
 
@@ -707,8 +810,22 @@ CC0-1.0-Universal license, whichever is more permissive.
 [^16]: Perl: Assignment Operators
     (<https://perldoc.perl.org/perlop#Assignment-Operators>)
 
-[^17]: JavaScript: Operator precedence
+[^17]: Swift Operator precedence
+    (<https://www.programiz.com/swift-programming/operator-precedence-associativity>)
+
+[^18]: Kotlin: Precedence
+    (<https://kotlinlang.org/grammar/#expressions>)
+
+[^19]: C# Reference: Operator precedence
+    (<https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/#operator-precedence>)
+
+[^20]: Dart: Operators (<https://dart.dev/language/operators>)
+
+[^21]: PHP: Operator precedence
+    (<https://www.php.net/manual/en/language.operators.precedence.php>)
+
+[^22]: JavaScript: Operator precedence
     (<https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Operator_precedence#table>)
 
-[^18]: C# Reference: Operator precedence
-    (<https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/#operator-precedence>)
+[^23]: Ruff: parenthesize-chained-operators (RUF021)
+    (<https://docs.astral.sh/ruff/rules/parenthesize-chained-operators/>)

@@ -15,7 +15,7 @@ post_history:
 python_status: Draft
 url: https://peps.python.org/pep-0824/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0824.rst
-source_commit: dcf16321fda9ef167e86fdafe7679c33eaa21631
+source_commit: eedc9c7f56f7f4153370d71f228ba230556974b6
 ---
 
 # Abstract
@@ -208,10 +208,12 @@ be placed:
 A new `Coalesce` operator is added to `boolop` for use in `BoolOp`
 nodes.
 
-    expr = BoolOp(boolop op, expr* values)
-        | ...
+``` ASDL
+expr = BoolOp(boolop op, expr* values)
+    | ...
 
-    boolop = And | Or | Coalesce
+boolop = And | Or | Coalesce
+```
 
 ### Grammar changes
 
@@ -267,9 +269,11 @@ A new `BoolAssign` AST node is added. Similar to `AugAssign`, it stores
 a `target` and `value` expression as well as the boolean operator
 `Coalesce`.
 
-    stmt = ...
-        | AugAssign(expr target, operator op, expr value)
-        | BoolAssign(expr target, boolop op, expr value)
+``` ASDL
+stmt = ...
+    | AugAssign(expr target, operator op, expr value)
+    | BoolAssign(expr target, boolop op, expr value)
+```
 
 ### Grammar changes
 

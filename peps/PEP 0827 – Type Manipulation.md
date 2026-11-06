@@ -18,7 +18,7 @@ post_history:
 python_status: Draft
 url: https://peps.python.org/pep-0827/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0827.rst
-source_commit: 656c0ea7299dc369dd9d57830104bf9cae1c0342
+source_commit: 8de83a3d0426366427b3a540eab3e8b6ee8f4769
 ---
 
 # Abstract
@@ -637,6 +637,16 @@ All of the operators in this section are `lifted over union types
 
 - `FromUnion[T]`: Returns a tuple containing all of the union elements,
   or a 1-ary tuple containing T if it is not a union.
+
+  The union should first be simplified by removing elements that are
+  subtypes of other elements, but *not* by replacing
+  `Literal[True, False]` with `bool` or vice-versa or similar.
+
+  The goal here is to make it possible to lift operations over unions.
+  Care ought to be taken when using this, since the particular order of
+  elements is not specified; typically the result of the iteration
+  should be unpacked into another union immediately.
+
 - `Union[*Ts]`: `Union` will become able to take variadic arguments, so
   that it can take unpacked comprehension arguments.
 
@@ -645,6 +655,11 @@ All of the operators in this section are `lifted over union types
 ::: {#pep827-members}
 - `Members[T]`: produces a `tuple` of `Member` types describing the
   members (attributes and methods) of class or typed dict `T`.
+
+  Properties should be returned as `property` types, which we should
+  make generic and parameterized over both the getter and setter types.
+  (Under discussion in [typeshed issue
+  #4731](https://github.com/python/typeshed/issues/4731))
 
   In order to allow typechecking time and runtime evaluation to coincide
   more closely, **only members with explicit type annotations are
@@ -1591,7 +1606,7 @@ One potential API for this might be:
       DropAnnotations[Annotated[int, 'xxx', 5]] = int
       DropAnnotations[int] = int
 
-### String manipulation
+## String manipulation
 
 TypeScript has \"template literal\" types for strings that allow both
 concatenating string literal types and decomposing them. They also have
@@ -1623,7 +1638,7 @@ also.
 All of the operators in this section are `lifted over union types
 <pep827-lifting>`{.interpreted-text role="ref"}.
 
-### NewProtocolWithBases
+## NewProtocolWithBases
 
 It would sometimes be useful to support something like
 `NewProtocolWithBases`, with a specification like:
@@ -1693,6 +1708,18 @@ simulated in other ways.
   `tuple[*[T | None for T in Any]]` would be `Any`. Arguably, though, we
   would like `tuple[Any | None, ...]` as the result, which would require
   some more careful thought to specify.
+
+- Would intersection types conflict with any of this, if they are added?
+  Would it be sufficient to just specify how existing operators should
+  handle it (probably including that intersections should be distributed
+  over unions when doing `FromUnion`, I\'d guess, like TS does for
+  conditional types)? We could potentially add `FromIntersection`, but
+  intersections simplify aggressively and it is not clear it would be
+  sensical. TypeScript does not have an equivalent.
+
+- Should `GetMemberType` follow the descriptor protocol, `__getattr__`,
+  etc? (Currently the behavior is for it to behave mostly like
+  `GetMember[T, S].type`.)
 
 # Acknowledgements
 

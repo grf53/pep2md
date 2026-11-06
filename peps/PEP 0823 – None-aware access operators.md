@@ -15,7 +15,7 @@ post_history:
 python_status: Draft
 url: https://peps.python.org/pep-0823/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0823.rst
-source_commit: a1862b132ffca89bab53134d7a91239639bc1d7e
+source_commit: 4b0c8a8817dd4fdc6fa1318192dedc58e8c1c6d7
 ---
 
 # Abstract
@@ -462,15 +462,17 @@ and thus the context will always be `Load`. Furthermore, an optional
 `group` attribute is added for all expression nodes. It is set to `1` if
 an expression is the topmost node in a group, `0` otherwise.
 
-    expr = ...
-        | Attribute(expr value, identifier attr, expr_context ctx)
-        | Subscript(expr value, expr slice, expr_context ctx)
-        ...
-        | NoneAwareAttribute(expr value, identifier attr)
-        | NoneAwareSubscript(expr value, expr slice)
+``` ASDL
+expr = ...
+    | Attribute(expr value, identifier attr, expr_context ctx)
+    | Subscript(expr value, expr slice, expr_context ctx)
+    ...
+    | NoneAwareAttribute(expr value, identifier attr)
+    | NoneAwareSubscript(expr value, expr slice)
 
-        attributes (int? group, int lineno, int col_offset,
-                    int? end_lineno, int? end_col_offset)
+    attributes (int? group, int lineno, int col_offset,
+                int? end_lineno, int? end_col_offset)
+```
 
 ## Grammar changes
 

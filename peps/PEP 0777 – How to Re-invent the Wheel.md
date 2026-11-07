@@ -14,7 +14,7 @@ post_history:
 python_status: Draft
 url: https://peps.python.org/pep-0777/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0777.rst
-source_commit: f95042bfd618388a2f783ac8ae62ee0a9656f90b
+source_commit: 5f94255f8bf2980958394edd19e5b71a64310e90
 ---
 
 # Abstract
@@ -385,7 +385,7 @@ There are *many* features that could be included as part of wheel 2.0,
 but this PEP does not cover them. The goal of this PEP is to define a
 compatibility story for the wheel file format. Changes that do not
 pertain to compatibility for wheel versions do not need to be in this
-PEP, and should be introducted in follow-up PEPs defining new wheel
+PEP, and should be introduced in follow-up PEPs defining new wheel
 features.
 
 # Discussion Topics

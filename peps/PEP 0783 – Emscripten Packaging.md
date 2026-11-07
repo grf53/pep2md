@@ -16,7 +16,7 @@ resolution: '`06-Apr-2026 <https://discuss.python.org/t/pep-783-emscripten-packa
 python_status: Accepted
 url: https://peps.python.org/pep-0783/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0783.rst
-source_commit: 75ce364a9eba5da9d8c27dfc277ac230484a1778
+source_commit: 99b19f561929a2ee813f1ac58dfa68068c7c476c
 ---
 
 # Abstract
@@ -259,7 +259,7 @@ the interpreter ABI and our long term goal is to upstream everything.
 No patch version
 
 :   We hope never to need the patch version, but it\'s good to be
-    prepared for unforseen problems.
+    prepared for unforeseen problems.
 
 # How to Teach This
 

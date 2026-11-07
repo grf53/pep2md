@@ -15,7 +15,7 @@ resolution: '`23-Oct-2025 <https://discuss.python.org/t/93444/46>`__'
 python_status: Final
 url: https://peps.python.org/pep-0793/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0793.rst
-source_commit: 8e5bed3645e7aec4d8ff3f2dfda92ab46582364e
+source_commit: 2ace01846ca093bb7950b34d87fc007178dd2043
 ---
 
 ::: canonical-doc
@@ -512,7 +512,7 @@ may be more useful.
     replace them with `PyType_GetModuleByToken`. Later in this guide,
     you\'ll set the token to *be* the existing `PyModuleDef` structure.
 
-    (You may skip this step if targetting Python versions that don\'t
+    (You may skip this step if targeting Python versions that don\'t
     expose `PyType_GetModuleByToken`, since `PyType_GetModuleByDef` is
     backwards-compatible.)
 

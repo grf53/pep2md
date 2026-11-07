@@ -14,7 +14,7 @@ resolution: '`23-Apr-2025 <https://discuss.python.org/t/105552/24>`__'
 python_status: Final
 url: https://peps.python.org/pep-0820/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0820.rst
-source_commit: c44728987da64d847a840574cda231b55cb8130d
+source_commit: 58c08422bb1730926cf9f5a43f213f8b951002c1
 ---
 
 ::: canonical-doc
@@ -61,7 +61,7 @@ to change the details.
 
 Both structures contain a *slots* field, essentially an array of [tagged
 unions](https://en.wikipedia.org/wiki/Tagged_union) (`void` pointers
-taged with an `int` ID). This allows for future expansion.
+tagged with an `int` ID). This allows for future expansion.
 
 In `793`{.interpreted-text role="pep"}, new module creation API was
 added. Instead of the `PyModuleDef` structure, it uses only an array of

@@ -14,7 +14,7 @@ resolution: https://discuss.python.org/t/44572/90
 python_status: Accepted
 url: https://peps.python.org/pep-0739/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0739.rst
-source_commit: 2bf5039bcec7c6769761d4168544675869716c21
+source_commit: 429b6d8fb364c655e0ab3879f0a9b1fdefdff237
 ---
 
 # Abstract
@@ -494,8 +494,8 @@ provided below, which is rendered in an human-readable format here.
 |                 |                                                     |
 |                 | This field **MUST** be present if the Python        |
 |                 | installation provides a dynamic `libpython` library |
-|                 | targetting the Stable ABI, otherwise this entry     |
-|                 | will be missing.                                    |
+|                 | targeting the Stable ABI, otherwise this entry will |
+|                 | be missing.                                         |
 |                 |                                                     |
 |                 | If this key is present `dynamic` **MUST** also be   |
 |                 | set.                                                |
@@ -639,9 +639,9 @@ environment should be provided by a separate file.
 Including environment-specific data in the config file means that it
 would be environment-specific, so virtual environments would need their
 own config file. This is problematic because virtual environments
-survive updates of the base Python installation, creating the possibily
-for the static config file to be outdated, and making its data
-unreliable, which defeats its purpose.
+survive updates of the base Python installation, creating the
+possibility for the static config file to be outdated, and making its
+data unreliable, which defeats its purpose.
 
 The proposed solution, partially implemented in this PEP, is to have a
 `build-details.json` file, referent to the base Python installation, and

@@ -16,7 +16,7 @@ resolution: '`25-Apr-2025 <https://discuss.python.org/t/77900/180>`__'
 python_status: Final
 url: https://peps.python.org/pep-0773/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0773.rst
-source_commit: 9331087e7f4ef04ac10ba94b9afffa3e2f1fd4b2
+source_commit: 965872c8c3a8c7468c383a6be45100593fdc5036
 ---
 
 ::: canonical-doc
@@ -1642,7 +1642,7 @@ It is possible to release each version to the Windows Store as we
 currently do, but make them unlisted and rely on an installer
 (potentially PyManager, WinGet, or another tool that can install Store
 packages). This would avoid the risk of overwhelming the user, while
-greatly simplifying our own reponsibilities for package management.
+greatly simplifying our own responsibilities for package management.
 
 This approach would leave a significant burden on whichever contributor
 has access to the Store publishing interface, as updating packages is a

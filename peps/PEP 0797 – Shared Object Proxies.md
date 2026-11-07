@@ -15,7 +15,7 @@ resolution: '`08-Jul-2026 <https://discuss.python.org/t/105709/35>`__'
 python_status: Rejected
 url: https://peps.python.org/pep-0797/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0797.rst
-source_commit: 13f4430e19e0e3f225df30a52fafc6307802c34d
+source_commit: a10f24821d975725d962e73ef83e6eb515219d71
 ---
 
 # Abstract
@@ -300,7 +300,7 @@ print(gc.get_referents(proxy))
 interp = interpreters.create()
 interp.prepare_main(proxy=proxy)
 
-# This prints out [], because the wrapepd object must be invisible to this
+# This prints out [], because the wrapped object must be invisible to this
 # interpreter.
 interp.exec("import gc; print(gc.get_referents(proxy))")
 ```

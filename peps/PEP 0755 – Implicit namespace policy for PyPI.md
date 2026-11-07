@@ -16,7 +16,7 @@ resolution: '`02-Oct-2026 <https://discuss.python.org/t/pep-755-implicit-namespa
 python_status: Withdrawn
 url: https://peps.python.org/pep-0755/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0755.rst
-source_commit: f38faac78d55ac862a6f70f9be6e7c4320aa56b9
+source_commit: 7b1301869260a180bfc4748ff23c9adb79daff6b
 ---
 
 ::: withdrawn
@@ -267,7 +267,7 @@ owner](#grant-ownership) primarily to reduce clutter, especially since
 this is the most common scenario.
 
 If there was an indicator, it would not be a check mark or similar as
-NuGet chose because it may mistakingly convey that there are associated
+NuGet chose because it may mistakenly convey that there are associated
 security guarantees inherent to the use of the package. Additionally,
 some social media platforms use a check mark for verified users which
 may cause confusion.

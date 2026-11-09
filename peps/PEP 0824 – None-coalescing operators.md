@@ -15,7 +15,7 @@ post_history:
 python_status: Draft
 url: https://peps.python.org/pep-0824/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0824.rst
-source_commit: eedc9c7f56f7f4153370d71f228ba230556974b6
+source_commit: c6e5645adbef5714f29a5acd7299b5cd3540edcf
 ---
 
 # Abstract
@@ -528,7 +528,7 @@ Looking at the other modern programming languages which have \"`null`
 coalescing\" operators, two options for the precedence emerge.
 
 1.  A precedence between binary and comparison operators as seen in both
-    Swift[^17] and Kotlin[^18] for their their \"Nil-Coalescing\" and
+    Swift[^17] and Kotlin[^18] for their \"Nil-Coalescing\" and
     \"Elvis\" operators respectively.
 2.  A precedence between the logical OR and conditional / ternary
     operators, see C#[^19], Dart[^20] and PHP[^21]. JS / TS[^22] is

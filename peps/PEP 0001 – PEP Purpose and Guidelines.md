@@ -18,7 +18,7 @@ post_history:
 python_status: Active
 url: https://peps.python.org/pep-0001/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0001.rst
-source_commit: d7ffb3747097d8433b74e3bfe3601d9d15648fac
+source_commit: 596f68e19abf6eae6626930e56e8784918f4cc83
 ---
 
 # What is a PEP?
@@ -285,7 +285,7 @@ discuss and review its contents, and the PEP should be updated so that
 the `Discussions-To` header links to it.
 
 The PEP authors (or sponsor, if applicable) may select any reasonable
-venue for the discussion, so long as the the following criteria are met:
+venue for the discussion, so long as the following criteria are met:
 
 - The forum is appropriate to the PEP\'s topic.
 - The thread is publicly available on the web so that all interested
@@ -370,8 +370,8 @@ tracker](https://github.com/python/typing-council/issues).
 The term \"PEP-Delegate\" is used under the Steering Council governance
 model for the PEP\'s designated decision maker, who is recorded in the
 \"PEP-Delegate\" field in the PEP\'s header. The term \"BDFL-Delegate\"
-is a deprecated alias for PEP-Delegate, a legacy of the time when when
-Python was led by [a BDFL](#pythons-bdfl). Any legacy references to
+is a deprecated alias for PEP-Delegate, a legacy of the time when Python
+was led by [a BDFL](#pythons-bdfl). Any legacy references to
 \"BDFL-Delegate\" should be treated as equivalent to \"PEP-Delegate\".
 
 An individual offering to nominate themselves as a PEP-Delegate must

@@ -15,7 +15,7 @@ post_history:
 python_status: Draft
 url: https://peps.python.org/pep-0818/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0818.rst
-source_commit: 22919ea03b23094c439c98bb80a4b29b810d92e8
+source_commit: d69337be48a36fa6878f4b44fab4fd740437d6c2
 ---
 
 # Abstract
@@ -783,7 +783,7 @@ The Python object `jstypes.code.run_js` is defined as follows:
 
 Unlike `run_js`, the JavaScript object `makePythonFunction` is strictly
 for the sake of our pseudocode and will not be included as part of the
-API. We define define `makePythonFunction` as follows:
+API. We define `makePythonFunction` as follows:
 
 ``` python
 def make_python_function(code):

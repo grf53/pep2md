@@ -15,7 +15,7 @@ post_history:
 python_status: Draft
 url: https://peps.python.org/pep-0786/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0786.rst
-source_commit: 24a08e1ce71d0dddf4d764ca820ffdadd2dc67f2
+source_commit: 9656002b4c8b8cdb96376133e71d40d8f123499e
 ---
 
 # Abstract
@@ -193,7 +193,7 @@ We first present some observations about the binary representations of
 alternative formulations of formatting negative numbers.
 
 Observe that one can always extend a signed number\'s binary
-representation by extending the the leading digit as a prefix:
+representation by extending the leading digit as a prefix:
 
 ``` text
 45 (8-bit)  00101101

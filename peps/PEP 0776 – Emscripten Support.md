@@ -16,7 +16,7 @@ resolution: '`04-Apr-2026 <https://discuss.python.org/t/pep-776-runtime-not-pack
 python_status: Active
 url: https://peps.python.org/pep-0776/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0776.rst
-source_commit: 9c6e41d0aac01677ca615537ef21e3388fc0e47d
+source_commit: 5f28eced2f09444b1dd0a8331c2f6e1f32a05997
 ---
 
 # Abstract
@@ -470,7 +470,7 @@ memory, and it is in use in Pyodide.
 
 Eventually, we hope to implement stack-switching-based signals so that
 it is possible to use signals in the main thread of node and the
-browser, as well as in in web pages that are not served with the shared
+browser, as well as in web pages that are not served with the shared
 memory headers. We will need to keep the shared memory based approach as
 well, both for backwards compatibility and because it is more efficient
 when it is possible. However, this is out of scope for this PEP.

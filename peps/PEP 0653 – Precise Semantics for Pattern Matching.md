@@ -11,7 +11,7 @@ post_history:
 python_status: Draft
 url: https://peps.python.org/pep-0653/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0653.rst
-source_commit: 567c8c8a1f2ce6b5f0fb6cc7560e02e85fbdf49e
+source_commit: 5f613971e16f90fbfc308af5b2163e4c2dee53cf
 ---
 
 # Abstract
@@ -474,7 +474,7 @@ translates to:
 
 ### Non-conforming special attributes
 
-All classes should ensure that the the values of `__match_container__`,
+All classes should ensure that the values of `__match_container__`,
 `__match_class__` and `__match_args__` follow the specification.
 Therefore, implementations can assume, without checking, that the
 following are true:

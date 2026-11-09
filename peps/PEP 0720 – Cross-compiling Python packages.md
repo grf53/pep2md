@@ -11,7 +11,7 @@ python_version: '3.12'
 python_status: Draft
 url: https://peps.python.org/pep-0720/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0720.rst
-source_commit: e9c2dd1a378fae7574ba0fbe2e1d78c2e953e991
+source_commit: 8e4d0cb96028e4ee25a0d1a2574f9d1cb9e6ed60
 ---
 
 # Abstract
@@ -132,7 +132,7 @@ assumption that the target system is the same as where the build is
 occurring, so introspection is usually used to guide the build.
 
 In this section, we try to document most of the ways this is
-accomplished. It should give a decent overview of of environment details
+accomplished. It should give a decent overview of environment details
 that are required by build systems.
 
 +----------------------------------------------+---------------------------------------+-------------------------+

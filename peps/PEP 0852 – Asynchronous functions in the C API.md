@@ -3,7 +3,7 @@ pep: 852
 title: Asynchronous functions in the C API
 author:
 - Peter Bierma <peter@python.org>
-discussions_to: Pending
+discussions_to: https://discuss.python.org/t/110003
 status: Draft
 type: Standards Track
 created: 02-Nov-2026
@@ -12,10 +12,11 @@ post_history:
 - '`14-Jan-2023 <https://discuss.python.org/t/22786>`__'
 - '`09-Jan-2024 <https://discuss.python.org/t/42842>`__'
 - '`12-Apr-2024 <https://discuss.python.org/t/50792>`__'
+- '`10-Nov-2026 <https://discuss.python.org/t/110003>`__'
 python_status: Draft
 url: https://peps.python.org/pep-0852/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0852.rst
-source_commit: bf430a89798e61f642a58ab2748a0668471f996b
+source_commit: e9bebc8d00db1a08d48e52922247cd764bc60ed8
 ---
 
 # Abstract

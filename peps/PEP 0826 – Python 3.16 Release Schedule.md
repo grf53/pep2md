@@ -11,7 +11,7 @@ python_version: '3.16'
 python_status: Active
 url: https://peps.python.org/pep-0826/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0826.rst
-source_commit: 22e244d743012fcb58d200c2a61727ea11f2f395
+source_commit: 4dff507b23f859b7d97a0ece5fa6bcf0920aab0f
 ---
 
 # Abstract
@@ -38,10 +38,10 @@ Actual:
 
 - 3.16 development begins: Thursday, 2026-05-07
 - 3.16.0 alpha 1: Tuesday, 2026-10-13
+- 3.16.0 alpha 2: Tuesday, 2026-11-10
 
 Expected:
 
-- 3.16.0 alpha 2: Tuesday, 2026-11-10
 - 3.16.0 alpha 3: Tuesday, 2026-12-15
 - 3.16.0 alpha 4: Tuesday, 2027-01-12
 - 3.16.0 alpha 5: Tuesday, 2027-02-09

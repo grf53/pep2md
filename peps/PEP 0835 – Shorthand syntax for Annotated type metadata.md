@@ -16,7 +16,7 @@ post_history:
 python_status: Draft
 url: https://peps.python.org/pep-0835/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0835.rst
-source_commit: 19e5876260daf17e5709b53caf0a470577e2f21d
+source_commit: b1f475051b734214b6d34ef2a5e19ad038e66fc9
 ---
 
 # Abstract
@@ -46,8 +46,8 @@ However, its verbosity remains a barrier to adoption:
     contributing to the PEP\'s withdrawal[^5].
 
 Of the 10,000 most downloaded PyPI projects, **43.4%** transitively
-depend on `Annotated`. Migrating the FastAPI codebase to the new
-shorthand removed 2,524 LOCs.
+depend on a package utilizing `typing.Annotated`. Migrating the FastAPI
+codebase to the new shorthand removed 2,524 LOCs.
 
 A container-like syntax opposes Python\'s evolution. Python is actively
 replacing generic wrappers like `typing.Union` with operators like `|`
@@ -61,7 +61,7 @@ metadata as a postfix operator, it:
 - **Reduces tokens** (no `typing.Annotated` import).
 - **Improves locality** (the base type remains front-and-center).
 - **Extends the arithmetic of types** (type metadata acts as an
-  operation on an existing type expression rather than a generic
+  operation on an existing annotation expression rather than a generic
   container).
 
 This resolves the conflict between concise syntax and strict typing:
@@ -125,14 +125,14 @@ terms apply:
   Specification](https://typing.python.org/en/latest/spec/annotations.html#type-and-annotation-expressions)
   (`484`{.interpreted-text role="pep"}).
 
-- **Type metadata**: e.g., `int @ <this>`. Data attached to a type
-  expression via `Annotated` (`593`{.interpreted-text role="pep"},
-  `746`{.interpreted-text role="pep"}).
+- **Type metadata**: e.g., `int @ <this>`. Data attached to an
+  annotation expression via `Annotated` (`593`{.interpreted-text
+  role="pep"}, `746`{.interpreted-text role="pep"}).
 
 - **Non-typing annotation**: e.g.,
   [\@no_type_check](https://docs.python.org/3/library/typing.html#typing.no_type_check)
   wrapping `x: <this>`. Annotations that are not intended to be
-  evaluated as type expressions (e.g.: ignored by type checkers).
+  evaluated as annotation expressions (e.g.: ignored by type checkers).
 
 - **Symbol decorator**: Applying metadata directly to a variable or
   field declaration, rather than to its underlying type. This
@@ -174,7 +174,8 @@ string:
 
     zip_code: int @ Ge(10000) @ Le(99999) | str @ Len(5)
 
-To attach metadata to the entire union, use parentheses:
+To attach metadata to the entire union, or when metadata itself is a
+union, use parentheses:
 
     # Attaches only to 'str'
     int | str @ Metadata    # equivalent to: int | Annotated[str, Metadata]
@@ -182,44 +183,59 @@ To attach metadata to the entire union, use parentheses:
     # Attaches to the entire union
     (int | str) @ Metadata  # equivalent to: Annotated[int | str, Metadata]
 
+    # Metadata is a union
+    int @ (str | float)     # equivalent to: Annotated[int, str | float]
+
 ## Flattening Multiple Metadata
 
-Chained metadata flattens the resulting `Annotated` object.
-`T @ m1 @ m2` evaluates to `Annotated[T, m1, m2]`, never
+Because `@` is left-associative, `T @ m1 @ m2` parses as
+`(T @ m1) @ m2`. Chained metadata flattens the resulting `Annotated`
+object: `T @ m1 @ m2` evaluates to `Annotated[T, m1, m2]`, never
 `Annotated[Annotated[T, m1], m2]`. This mirrors `typing.Annotated`\'s
 existing runtime behavior.
 
 This same logic applies when the left-hand operand is an existing
-`Annotated` type:
+`Annotated` type, whereas parenthesizing the right-hand side evaluates
+`m1 @ m2` first as a single metadata element:
 
-    Annotated[int, m1] @ m2  # AnnotatedType(int, m1, m2) (flattened)
+    Annotated[int, m1] @ m2  # Annotated[int, m1, m2] (flattened, two metadata elements)
+    T @ (m1 @ m2)            # Annotated[T, m1 @ m2] (single metadata element)
 
 ## Runtime Behavior
 
-`@` produces a `types.AnnotatedType` (a new built-in C type). The
-existing `typing.Annotated` unifies with this type.
+`@` produces a `typing.Annotated` instance (now implemented as a
+built-in C type, similar to `typing.TypeAliasType`).
 `typing.Annotated[X, Y]` and `X @ Y` return the exact same object:
 
 ``` pycon
 >>> type(int @ Field()) is type(Annotated[int, Field()])
 True
->>> typing.Annotated is types.AnnotatedType
+>>> isinstance(int @ Field(), typing.Annotated)
 True
 ```
 
-An `AnnotatedType` object exposes the following attributes:
+An `Annotated` object exposes the following attributes:
 
 - `__origin__`: The base type (e.g., `int`).
 - `__metadata__`: A tuple of metadata items.
 - `__args__`: The tuple `(origin, *metadata)`, for compatibility with
   `typing.get_args()`.
-- `__parameters__`: A tuple of unique free type parameters of the type.
+- `__parameters__`: A tuple of unique free type parameters in
+  `__origin__`.
 
-The `repr()` of an `AnnotatedType` uses the shorthand syntax:
+The `repr()` of an `Annotated` object uses the shorthand syntax. Because
+metadata may be an arbitrary object whose `repr()` contains lower- or
+equal-precedence operators (such as `str | float`, `str @ 'a'`, or
+custom user metadata), non-string metadata items are parenthesized on
+the right-hand side (see [Open Issues](#open-issues)):
 
 ``` pycon
+>>> int @ "positive"
+int @ 'positive'
+>>> int @ (str | float)
+int @ (str | float)
 >>> int @ Field(gt=0)
-int @ Field(gt=0)
+int @ (Field(gt=0))
 ```
 
 ## Handling of `None`
@@ -236,32 +252,38 @@ def matmul_arrays(a: np.array | None, b: np.array):
 ```
 
 If `NoneType.__matmul__` existed, this would silently return an
-`AnnotatedType` instead of raising a `TypeError`.
+`Annotated` type instead of raising a `TypeError`.
 
 Because `NoneType` lacks `__matmul__`, expressions like
 `None @ Metadata` will raise a `TypeError` at runtime.
 
 To support this safely at runtime, library authors are encouraged to
 implement `__rmatmul__` on their metadata objects. This provides a
-robust fallback for types that do not invoke `__matmul__` on the left
-operand (such as `NoneType` or `ForwardRef`).
+robust fallback for types that do not natively invoke `__matmul__` on
+the left operand (such as `NoneType`). (Note: while `typing.ForwardRef`
+implements `__matmul__`, `annotationlib` does not invoke it; it
+evaluates strings using proxy types and then replaces them with
+`ForwardRef` instances in a second pass).
 
 ## Supported Left-Hand Operands
 
-The `@` operator adds `nb_matrix_multiply` to `type` and to all typing
-constructs that support the `|` union operator (`types.GenericAlias`,
-`types.UnionType`, `types.AnnotatedType`, `typing.TypeVar`,
-`typing.ParamSpec`, `typing.TypeVarTuple`, `typing.TypeAliasType`,
-`typing.ForwardRef`, and `sentinel` objects).
+The `@` operator adds `__matmul__` to `type` and to typing constructs
+that can be wrapped by `Annotated` (`types.GenericAlias`,
+`types.UnionType`, `typing.Annotated`, `typing.TypeVar`,
+`typing.ParamSpec`, `typing.ParamSpecArgs`, `typing.ParamSpecKwargs`,
+`typing.TypeVarTuple`, `typing.TypeAliasType`, `typing.ForwardRef`,
+`typing.NewType`, `typing._SpecialForm`, `typing._BaseGenericAlias`,
+`dataclasses.InitVar`, and `sentinel` objects).
 
 Applying `@` to a class evaluates as type metadata; applying it to an
 instance performs arithmetic.
 
-For example, `int @ Field()` produces an `AnnotatedType`, while
+For example, `int @ Field()` produces a `typing.Annotated` type, while
 `42 @ something` raises a `TypeError` (or delegates to `__rmatmul__`).
 
-Likewise, `ndarray @ Field()` produces an `AnnotatedType`, even though
-`ndarray` instances define `__matmul__` for matrix multiplication.
+Likewise, `ndarray @ Field()` produces a `typing.Annotated` type, even
+though `ndarray` instances define `__matmul__` for matrix
+multiplication.
 
 Custom metaclasses can overload `__matmul__` provided `@` is avoided in
 type expressions.
@@ -281,7 +303,7 @@ and CPython prototype testing confirms that libraries like `typer` and
 
 ## Parentheses and Verbosity
 
-Writing `address: (str | None) @Field(...)` adds verbosity due to the
+Writing `address: (str | None) @ Field(...)` adds verbosity due to the
 lack of native symbol decorators. Frameworks co-opt `Annotated` to
 configure fields, even though the developer\'s intent is to configure
 the `address` field, not the `str | None` type. While the `@` shorthand
@@ -325,9 +347,9 @@ rare `__or__` and `__and__` overloads in libraries like `pgpy` (#1,690),
 `dataclass-wizard` (#2,205), and `multimethod` (#2,377)).
 
 The pure-Python `typing._AnnotatedAlias` class is replaced with a native
-C implementation (`types.AnnotatedType`). `typing.Annotated` becomes a
-reference to this C type rather than a special form with a custom
-metaclass.
+C implementation of `typing.Annotated`. `typing.Annotated` becomes a
+built-in C type (similar to `typing.TypeAliasType`) rather than a
+special form with a custom metaclass.
 
 To ensure a smooth transition, this legacy class is retained as a
 deprecated compatibility shim. Code using
@@ -338,10 +360,10 @@ deprecated compatibility shim. Code using
 Code that should be updated:
 
 - `type(ann).__name__ == '_AnnotatedAlias'` → use
-  `isinstance(ann, types.AnnotatedType)` or
+  `isinstance(ann, typing.Annotated)` or
   `typing.get_origin(ann) is Annotated`
 - `typing._AnnotatedAlias(origin, metadata)` → use
-  `Annotated[origin, *metadata]` or `origin @m1 @m2`
+  `Annotated[origin, *metadata]` or `origin @ m1 @ m2`
 
 **Backporting via typing_extensions:** Like `X | Y`, the `@` shorthand
 requires changes to the metatype (`type.__matmul__`), which cannot be
@@ -468,10 +490,6 @@ Prototype implementations are available for the following tools:
 - **Ruff:** [Ruff
   at-type-annot](https://github.com/till-varoquaux/ruff/compare/main...till-varoquaux:ruff:feature/at-type-annot)
 
-`builtins.type` in Typeshed will be updated to include
-`def __matmul__(self, other: Any) -> types.AnnotatedType: ...` to
-support type checkers.
-
 # Rejected Ideas
 
 ## Alternative Syntaxes
@@ -498,10 +516,10 @@ We explicitly reject relying *solely* on metadata objects implementing
         ...
 
 This approach is rejected for two reasons. First, relying on arbitrary
-right-hand objects to implement `__rmatmul__` breaks the type expression
-model, complicating the assignment of fixed static meanings to
-operators. This is inconsistent with how `|` works and contradicts the
-type expression grammar defined in the specification. Second,
+right-hand objects to implement `__rmatmul__` breaks the annotation
+expression model, complicating the assignment of fixed static meanings
+to operators. This is inconsistent with how `|` works and contradicts
+the annotation expression grammar defined in the specification. Second,
 `593`{.interpreted-text role="pep"} explicitly permits any valid Python
 object as metadata (e.g., strings, dicts). Implementing `__matmul__`
 directly on the `type` metaclass avoids opt-in base classes and provides
@@ -511,14 +529,14 @@ consistent behavior.
 
 True parameter/field decorators were rejected for now. Modifying the
 core parser for symbol-level decorators opens a complex design space;
-this PEP scopes the `@` operator to type expressions.
+this PEP scopes the `@` operator to annotation expressions.
 
 ## Avoiding @ Due to Matrix Multiplication
 
 We rejected the argument that `@` should be avoided because of its
-association with matrix multiplication. Within a type expression, Python
-already reuses standard operators (like `|` for unions and `[]` for
-generics) with typing-specific semantics (see [Why the @
+association with matrix multiplication. Within an annotation expression,
+Python already reuses standard operators (like `|` for unions and `[]`
+for generics) with typing-specific semantics (see [Why the @
 Operator?](#why-the-operator)).
 
 ## Structural Evaluation Format (`Format.TYPE`)
@@ -530,6 +548,16 @@ operator and preserve metadata on unresolvable `ForwardRef` instances.
 This was rejected. Prototype integrations (`beartype`, `pydantic`,
 `fastapi`, `sqlalchemy`, and `hypothesis`) showed the existing ecosystem
 handles the `@` operator using `annotationlib`\'s current tools.
+
+However, we acknowledge a tradeoff: evaluating undefined annotations
+with `Format.FORWARDREF` now produces an opaque
+`ForwardRef("undefined @ 'metadata'")`. This makes it harder to extract
+metadata than with `Annotated` (where `get_args()` yields
+`(ForwardRef("undefined"), 'metadata')`). Despite this regression, we
+found no breakage in our prototype migrations, indicating that runtime
+tools generally depend on successful type resolution or structural
+evaluation rather than raw forward reference strings. This is further
+mitigated by adding `__rmatmul__` on annotation classes.
 
 ## No-Space Formatting (`@annot`)
 
@@ -568,7 +596,7 @@ typically inspect static definitions during class creation rather than
 relying on standalone descriptors.
 
 `@Field(...) id: int` would evaluate identically to
-`id: int @Field(...)`. This allows existing frameworks to inspect field
+`id: int @ Field(...)`. This allows existing frameworks to inspect field
 configurations and continue working unmodified. Under this model,
 value-space decorators modify objects at runtime, while type-space
 decorators attach metadata to a type.
@@ -595,14 +623,25 @@ foundation for future extensions like annotation targets.
 
 # Open Issues
 
+**Parenthesization in \`\`repr()\`\`:** Because metadata can be any
+arbitrary object with a custom `__repr__`, formatting `Annotated` as
+`T @ M` without parentheses can produce misleading output when `repr(M)`
+contains lower- or equal-precedence operators (e.g.,
+`Annotated[int, str | float]` or `int @ (str @ 'a')`). The reference
+implementation currently parenthesizes all non-string metadata on the
+right-hand side (e.g., `int @ (str | float)`, `int @ (Field(gt=0))`)
+while leaving string literals unparenthesized (`int @ 'meta'`). Should
+`repr()` wrap all non-string metadata, or use another heuristic to omit
+parentheses when safe?
+
 **Deprecation Timeline:** As a private class, `typing._AnnotatedAlias`
 could bypass the standard 5-year deprecation policy
 (`387`{.interpreted-text role="pep"}). Should we fast-track its removal?
 
 # Acknowledgements
 
-Thanks to Hugo van Kemenade, Jelle Zijlstra, and Eric Traut for their
-feedback, guidance, and assistance in refining this proposal.
+Thanks to Hugo van Kemenade, Jelle Zijlstra, Carl Meyer, and Eric Traut
+for their feedback, guidance, and assistance in refining this proposal.
 
 # References
 

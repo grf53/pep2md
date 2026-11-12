@@ -1,6 +1,6 @@
 ---
 pep: 845
-title: Leading-Dot Value Patterns
+title: Leading-Dot Value Patterns for match statements
 author:
 - Thomas Kehrenberg <tmke8@posteo.net>
 - Marc Mueller
@@ -17,23 +17,32 @@ post_history:
 python_status: Draft
 url: https://peps.python.org/pep-0845/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0845.rst
-source_commit: aad6bc8e62392a0edbe73792d82a2af3e1d654ff
+source_commit: f223c5245b85758ea85c31f05e86988ad6c721c3
 ---
 
 # Abstract
 
 This PEP enables the use of non-attribute names as **value patterns** in
-match statements. A name prefixed with a dot is looked up using the
-normal name resolution rules and compared to the match subject by
-equality in the same manner as existing value patterns, instead of being
-treated as a **capture pattern**. This makes it possible to match local
-variables and global variables defined in the same module without using
-a guard clause.
+match statements. This makes it possible to match local variables and
+global variables defined in the same module without having to use a
+guard clause.
+
+A name prefixed with a dot is looked up using the normal name resolution
+rules and compared to the match subject by equality in the same manner
+as existing value patterns, instead of being treated as a **capture
+pattern**.
 
 ``` python
 def get_book_titles_for_author(author: str):
     for book in BOOKS:
         match book:
+            # before
+            case {"title": title, "author": book_author} if (
+                book_author == author
+            ):
+                yield title
+
+            # after
             case {"title": title, "author": .author}:
                 yield title
 ```
@@ -123,6 +132,14 @@ workarounds like the guard clause.
 The value pattern will be extended to support simple names if they are
 prefixed by a leading dot. The lookup is performed following the
 standard Python name resolution rules.
+
+``` python
+author = "William Shakespeare"
+
+match book:
+    case {"author": .author}:
+        ...
+```
 
 ## Interaction with capture patterns
 
@@ -233,28 +250,40 @@ There are no new security implications from this proposal.
 
 # How to Teach This
 
-The rule presented in the `636`{.interpreted-text role="pep"} tutorial
-can be stated as follows:
+## Prerequisites
 
-> In a pattern, a name **with a dot** is looked up and compared; a name
-> **without a dot** captures the subject.
+Students should already be familiar with the basics of match statements.
+In particular the difference between:
 
-The leading-dot form can be introduced as \"a value pattern whose
-namespace part is empty\": you write `helpers.MISSING` when the constant
-lives in a separate namespace and `.MISSING` when it does not.
+- Value patterns, e.g. `HTTPStatus.OK`
+- Capture patterns, e.g. `status` or `_ as status`
+
+## Basics
+
+Simple (undotted) variables can now be used in **value patterns** if
+they are prefixed **with a dot**. They are looked up using the normal
+name resolution rules compared to the match subject by equality in the
+same manner as existing value patterns.
+
+## When to use
+
+This is useful when you want to match a subject value against a
+variable. Just add a **leading dot** to the variable name to
+differentiate it from a **capture pattern**, e.g. `.author` below.
+Previously, this required using a guard clause.
 
 ``` python
-MISSING = sentinel('MISSING')
-
-match value:
-    case .MISSING:  # value pattern; looked up and compared
-        ...
-    case found:  # capture pattern; always matches and binds
-        ...
+def get_book_titles_for_author(author: str):
+    for book in BOOKS:
+        match book:
+            case {"title": title, "author": .author}:
+                yield title
 ```
 
-Documentation for the `match` statement will be updated to include the
-leading-dot syntax.
+## When not to use
+
+Do not use the **leading dot** for a name when the goal is to bind the
+subject value to a variable instead, e.g. `title` in the example above.
 
 # Reference Implementation
 
@@ -274,9 +303,28 @@ currently used for lookup in Python patterns. By contrast, a dot is
 already part of every dotted value pattern. Curly braces could be
 confused with mapping patterns, while `==CONSTANT` could imply support
 for other comparison operators. General comparison patterns are outside
-the scope of this PEP, as discussed below. In the community poll
-referenced in [Why a leading dot](#why-a-leading-dot), each of these
-options received fewer approvals than the leading-dot form.
+the scope of this PEP. In the community poll referenced in [Why a
+leading dot](#why-a-leading-dot), each of these options received fewer
+approvals than the leading-dot form.
+
+## Use `..CONSTANT`
+
+It was suggested to use a double leading dot. The first `.` would be a
+standin for the value lookup, while the second `.` would be the regular
+attribute notation.
+
+While the leading dot explicitly does not select the scope, see
+[Restricting the leading-dot syntax to the current
+scope](#restricting-the-leading-dot-syntax-to-the-current-scope), a
+double-dot would look too similar to the existing import syntax where it
+means to go up a level in the directory / package hierarchy. This would
+create confusion about the new **value pattern** syntax when developers
+assume that `..CONSTANT` would resolve in the parent namespace. It would
+also imply that `.CONSTANT` exist as well.
+
+Either way, with a single or double leading dot, developers would have
+to learn how to use it. A single leading dot avoids unnecessary
+uncertainty.
 
 ## Keyword-based markers (`value NAME`, `constant case NAME:`)
 
@@ -330,11 +378,12 @@ Restricting the new form to a single identifier avoids this duplication.
 
 ## Special-casing sentinels only
 
-Since `661`{.interpreted-text role="pep"} gives each sentinel a distinct
-type, matching could be supported through class patterns, or sentinels
-could be special-cased as quasi-literals like `None`. But the problem is
-not specific to sentinels: any unqualified constant (a numeric constant,
-an interned default object, an enum member imported with
+Since `661`{.interpreted-text role="pep"} gives each
+`sentinel`{.interpreted-text role="py:class"} a distinct type, matching
+could be supported through class patterns, or sentinels could be
+special-cased as quasi-literals like `None`. But the problem is not
+specific to sentinels: any unqualified constant (a numeric constant, an
+interned default object, an enum member imported with
 `from module import MEMBER`) has the same issue. Solving it for one kind
 of value would leave other unqualified constants unsupported and would
 add a sentinel-specific exception to the pattern grammar.
@@ -381,6 +430,13 @@ object itself.
 
 # Change History
 
+- 09-Nov-2026
+  - Update PEP title to reference match statements.
+  - Rewrote [Abstract](#abstract) to point out the main use case more
+    clearly.
+  - Added a short example to [Specification](#specification).
+  - Turned [How to Teach This](#how-to-teach-this) into a mini-tutorial.
+  - Added [Use ..CONSTANT](#use-..constant) as rejected idea.
 - 25-Sep-2026
   - Clarify interaction with **capture patterns**
   - Added rejected idea for `Literal[NAME]`

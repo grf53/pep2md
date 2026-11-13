@@ -18,7 +18,7 @@ resolution: https://discuss.python.org/t/18183/26
 python_status: Final
 url: https://peps.python.org/pep-0683/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0683.rst
-source_commit: 80243b8cdc898763b8cf94a92205ea8af0e8e4e3
+source_commit: ef564aa3407a3d5367a99f4ac9a4bd9b1dde7dc1
 ---
 
 ::: canonical-doc
@@ -29,9 +29,9 @@ source_commit: 80243b8cdc898763b8cf94a92205ea8af0e8e4e3
 
 The PEP was accepted with conditions:
 
-- the primary proposal in [Solutions for Accidental
-  De-Immortalization](#solutions-for-accidental-de-immortalization)
-  (reset the immortal refcount in `tp_dealloc()`) was applied
+- the primary proposal in `pep683-solutions`{.interpreted-text
+  role="ref"} (reset the immortal refcount in `tp_dealloc()`) was
+  applied
 - types without this were not immortalized (in CPython\'s code)
 - the PEP was updated with final benchmark results once the
   implementation is finalized (confirming the change is worthwhile)
@@ -214,10 +214,11 @@ objects exposed by the public C-API.
 
 In general, a strong immutability guarantee for objects enables Python
 applications to scale better, particularly in [multi-process
-deployments](Facebook). This is because they can then leverage
-multi-core parallelism without such a significant tradeoff in memory
-usage as they now have. The cases we just described, as well as those
-described above in [Motivation](#motivation), reflect this improvement.
+deployments](https://www.facebook.com/watch/?v=437636037237097&t=560).
+This is because they can then leverage multi-core parallelism without
+such a significant tradeoff in memory usage as they now have. The cases
+we just described, as well as those described above in
+[Motivation](#motivation), reflect this improvement.
 
 ## Performance
 
@@ -228,9 +229,10 @@ with a handful of basic mitigations applied. See the
 [mitigations](#mitigations) section below.
 
 On the positive side, immortal objects save a significant amount of
-memory when used [with a pre-fork model](Facebook). Also, immortal
-objects provide opportunities for specialization in the eval loop that
-would improve performance.
+memory when used [with a pre-fork
+model](https://www.facebook.com/watch/?v=437636037237097&t=560). Also,
+immortal objects provide opportunities for specialization in the eval
+loop that would improve performance.
 
 ## Backward Compatibility
 
@@ -386,8 +388,8 @@ As to how realistic, the answer isn\'t clear currently. However, the
 mitigation is simple enough that we can safely proceed under the
 assumption that it would not be a problem.
 
-We look at possible solutions [later
-on](Solutions for Accidental De-Immortalization).
+We look at possible solutions
+`later on <pep683-solutions>`{.interpreted-text role="ref"}.
 
 ## Alternate Python Implementations
 
@@ -683,7 +685,7 @@ mechanism is described in `659`{.interpreted-text role="pep"}. Also see
   page(s)
 - saturated refcounts using the 32 least-significant bits
 
-## Solutions for Accidental De-Immortalization
+## Solutions for Accidental De-Immortalization {#pep683-solutions}
 
 In the [Accidental De-Immortalizing](#accidental-de-immortalizing)
 section we outlined a possible negative consequence of immortal objects.
@@ -800,10 +802,11 @@ Python object:
 
 - [PyObject.ob_refcnt](https://github.com/python/cpython/blob/80a9ba537f1f1666a9e6c5eceef4683f86967a1f/Include/object.h#L107):
   the object\'s [refcount](#refcounting)
-- [\_PyGC_Head](PyGC_Head): (optional) the object\'s node in a list of
-  [\"GC\" objects](#refcounting)
-- [\_PyObject_HEAD_EXTRA](PyObject_HEAD_EXTRA): (optional) the object\'s
-  node in the list of heap objects
+- [\_PyGC_Head](https://github.com/python/cpython/blob/80a9ba537f1f1666a9e6c5eceef4683f86967a1f/Include/internal/pycore_gc.h#L11-L20):
+  (optional) the object\'s node in a list of [\"GC\"
+  objects](#refcounting)
+- [\_PyObject_HEAD_EXTRA](https://github.com/python/cpython/blob/80a9ba537f1f1666a9e6c5eceef4683f86967a1f/Include/object.h#L68-L72):
+  (optional) the object\'s node in the list of heap objects
 
 `ob_refcnt` is part of the memory allocated for every object. However,
 `_PyObject_HEAD_EXTRA` is allocated only if CPython was built with

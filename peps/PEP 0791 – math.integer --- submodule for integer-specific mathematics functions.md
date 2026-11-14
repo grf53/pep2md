@@ -20,7 +20,7 @@ resolution: '`23-Oct-2025 <https://discuss.python.org/t/92548/154>`__'
 python_status: Final
 url: https://peps.python.org/pep-0791/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0791.rst
-source_commit: ff1400ff49c7a948575cff3fbe6b52a44b393eb0
+source_commit: 629b3d43c2d223ba135b38daa850211a51b30890
 ---
 
 ::: canonical-doc
@@ -35,7 +35,7 @@ and other functions defined for integer arguments, like
 `math.gcd`{.interpreted-text role="external+py3.14:func"} or
 `math.isqrt`{.interpreted-text role="external+py3.14:func"}.
 
-# Motivation
+# Motivation {#pep791-motivation}
 
 The `math`{.interpreted-text role="external+py3.14:mod"} documentation
 says: \"This module provides access to the mathematical functions
@@ -181,8 +181,8 @@ will provide new submodule content for older Python versions.
 
 # Possible Extensions
 
-New functions (like mentioned in [Motivation](##REF##Motivation)
-section) are not part of this proposal.
+New functions (like mentioned in `pep791-motivation`{.interpreted-text
+role="ref"} section) are not part of this proposal.
 
 Though, we should mention that, unless we can just provide bindings to
 some well supported mathematical library like the GMP, the submodule

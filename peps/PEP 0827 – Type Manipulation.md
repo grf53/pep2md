@@ -18,7 +18,7 @@ post_history:
 python_status: Draft
 url: https://peps.python.org/pep-0827/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0827.rst
-source_commit: 8de83a3d0426366427b3a540eab3e8b6ee8f4769
+source_commit: f70b4e42a064ce209dd9a4d333c3da47e0e76339
 ---
 
 # Abstract
@@ -1731,21 +1731,20 @@ substantial influence on this proposal!
 
 # Footnotes
 
-- \"Partial polymorphic type inference is undecidable\" by Hans Boehm:
-  <https://dl.acm.org/doi/10.1109/SFCS.1985.44>
-
-- \"On the Undecidability of Partial Polymorphic Type Reconstruction\"
-  by Frank Pfenning:
-  <https://www.cs.cmu.edu/~fp/papers/CMU-CS-92-105.pdf>
-
-  Our setting does not try to infer generic types for functions, though,
-  which might dodge some of the problems. On the other hand, we have
-  subtyping. (Honestly we are already pretty deep into some of these
-  cans of worms.)
-
 # Copyright
 
 This document is placed in the public domain or under the
 CC0-1.0-Universal license, whichever is more permissive.
 
 [^1]:
+    - \"Partial polymorphic type inference is undecidable\" by Hans
+      Boehm: <https://dl.acm.org/doi/10.1109/SFCS.1985.44>
+
+    - \"On the Undecidability of Partial Polymorphic Type
+      Reconstruction\" by Frank Pfenning:
+      <https://www.cs.cmu.edu/~fp/papers/CMU-CS-92-105.pdf>
+
+      Our setting does not try to infer generic types for functions,
+      though, which might dodge some of the problems. On the other hand,
+      we have subtyping. (Honestly we are already pretty deep into some
+      of these cans of worms.)

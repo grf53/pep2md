@@ -15,7 +15,7 @@ resolution: https://discuss.python.org/t/19743/30
 python_status: Final
 url: https://peps.python.org/pep-0697/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0697.rst
-source_commit: c14edbc565ea5b6f616bc4f49ee3cb0727a88876
+source_commit: e88426538ce77a4af65f9fa3fe7c932f396668df
 ---
 
 ::: canonical-doc
@@ -250,7 +250,8 @@ Note
 :::
 
 The individual cases are easier to explain in isolation (see the
-[reference implementation](#reference-implementation) for draft docs).
+`reference implementation <pep697-reference-implementation>`{.interpreted-text
+role="ref"} for draft docs).
 ::::
 
 - `spec->basicsize > 0`: No change to the status quo. (The base class
@@ -457,7 +458,7 @@ The initial implementation will include reference documentation and a
 What\'s New entry, which should be enough for the target audience \--
 authors of C extension libraries.
 
-# Reference Implementation
+# Reference Implementation {#pep697-reference-implementation}
 
 A reference implementation is in the [extend-opaque
 branch](https://github.com/python/cpython/compare/main...encukou:cpython:extend-opaque)

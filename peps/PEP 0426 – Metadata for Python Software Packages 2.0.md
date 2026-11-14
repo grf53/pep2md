@@ -30,7 +30,7 @@ superseded_by: '566'
 python_status: Withdrawn
 url: https://peps.python.org/pep-0426/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0426.rst
-source_commit: 255ce2d7e5cdd95fbc2e2734ae0d2a342e4fcbb0
+source_commit: 7aa1531c0960d1c29691312c66d6f0dc3de508f6
 ---
 
 ::: canonical-pypa-spec
@@ -767,9 +767,9 @@ may declare:
   times
 
 These optional categories are known as
-[Extras](#extras-optional-dependencies). In addition to the four
-standard categories, projects may also declare their own custom
-categories in the [Extras](#extras) field.
+`Extras <pep426-extras-optional-dependencies>`{.interpreted-text
+role="ref"}. In addition to the four standard categories, projects may
+also declare their own custom categories in the [Extras](#extras) field.
 
 There are also two standard extra categories that imply dependencies on
 other extras:
@@ -807,9 +807,10 @@ which dependencies should be installed for the specified activities:
   - the `doc` extra
   - the `dev` extra
 
-The notation described in [Extras (optional
-dependencies)](#extras-optional-dependencies) SHOULD be used to
-determine exactly what gets installed for various operations.
+The notation described in
+`pep426-extras-optional-dependencies`{.interpreted-text role="ref"}
+SHOULD be used to determine exactly what gets installed for various
+operations.
 
 Installation tools SHOULD report an error if dependencies cannot be
 satisfied, MUST at least emit a warning, and MAY allow the user to force
@@ -821,8 +822,9 @@ spec file.
 ## Extras
 
 A list of optional sets of dependencies that may be used to define
-conditional dependencies in dependency fields. See [Extras (optional
-dependencies)](#extras-optional-dependencies) for details.
+conditional dependencies in dependency fields. See
+`pep426-extras-optional-dependencies`{.interpreted-text role="ref"} for
+details.
 
 The names of extras MUST abide by the same restrictions as those for
 distribution names.
@@ -873,8 +875,9 @@ following subfields:
 
 - `requires`: a list of requirements needed to satisfy the dependency
 - `extra`: the name of a set of optional dependencies that are requested
-  and installed together. See [Extras (optional
-  dependencies)](#extras-optional-dependencies) for details
+  and installed together. See
+  `pep426-extras-optional-dependencies`{.interpreted-text role="ref"}
+  for details
 - `environment`: an environment marker defining the environment that
   needs these dependencies. The syntax and capabilities of environment
   markers are defined in `508`{.interpreted-text role="pep"}
@@ -1000,7 +1003,7 @@ If an installation tool encounters a required extension it doesn\'t
 understand when attempting to install from a wheel archive, it MAY fall
 back on attempting to install from source rather than failing entirely.
 
-# Extras (optional dependencies)
+# Extras (optional dependencies) {#pep426-extras-optional-dependencies}
 
 As defined in `508`{.interpreted-text role="pep"}, extras are additional
 dependencies that enable an optional aspect of a project release, often

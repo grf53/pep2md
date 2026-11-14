@@ -20,7 +20,7 @@ superseded_by: '734'
 python_status: Superseded
 url: https://peps.python.org/pep-0554/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0554.rst
-source_commit: d6be2c55200c26ca82eb00749c675e5e97592289
+source_commit: fdf7f15af00968f5731472e61e147a3007d65f2f
 ---
 
 :::: note
@@ -41,7 +41,8 @@ CPython has supported multiple interpreters in the same process (AKA
 available via the C-API. [\[c-api\]](#c-api){.citation} Multiple
 interpreters operate in [relative isolation from one
 another](#interpreter-isolation), which facilitates novel alternative
-approaches to [concurrency](#concurrency).
+approaches to `concurrency <pep554-concurrency>`{.interpreted-text
+role="ref"}.
 
 This proposal introduces the stdlib `interpreters` module. It exposes
 the basic functionality of multiple interpreters already provided by the
@@ -526,9 +527,10 @@ on python-dev.)
 However, this PEP does not propose any new concurrency API. At most it
 exposes minimal tools (e.g. subinterpreters, channels) which may be used
 to write code that follows patterns associated with (relatively)
-new-to-Python [concurrency models](#concurrency). Those tools could also
-be used as the basis for APIs for such concurrency models. Again, this
-PEP does not propose any such API.
+new-to-Python
+`concurrency models <pep554-concurrency>`{.interpreted-text role="ref"}.
+Those tools could also be used as the basis for APIs for such
+concurrency models. Again, this PEP does not propose any such API.
 
 - \"there is no point to exposing subinterpreters if they still share
   the GIL\"
@@ -555,7 +557,7 @@ actually share data between interpreters, instead focusing on copying.
 
 # About Subinterpreters
 
-## Concurrency
+## Concurrency {#pep554-concurrency}
 
 Concurrency is a challenging area of software development. Decades of
 research and practice have led to a wide variety of concurrency models,
@@ -816,7 +818,7 @@ The module also provides the following class:
 
 In addition to the functionality of `Interpreter.set_main_attrs()`, the
 module provides a related way to pass data between interpreters:
-channels. See [Channels](#channels) below.
+channels. See `pep554-channels`{.interpreted-text role="ref"} below.
 
 ## Uncaught Exceptions
 
@@ -895,7 +897,7 @@ We will also support a small number of complex types initially:
 
 - `memoryview`, to allow sharing `3118`{.interpreted-text role="pep"}
   buffers
-- [channels](#channels)
+- `channels <pep554-channels>`{.interpreted-text role="ref"}
 
 Further builtin types may be supported later, complex or not. Limiting
 the initial shareable types is a practical matter, reducing the
@@ -925,7 +927,7 @@ interpreters is to use a pipe (see `os.pipe()`):
 Several of the earlier examples demonstrate this, such as [Synchronize
 using an OS pipe](#synchronize-using-an-os-pipe).
 
-## Channels[]{#interpreters-RecvChannel}[]{#interpreters-create-channel} {#interpreters-SendChannel}
+## Channels[]{#interpreters-SendChannel}[]{#interpreters-RecvChannel}[]{#interpreters-create-channel} {#pep554-channels}
 
 The `interpreters` module will include a dedicated solution for passing
 object data between interpreters: channels. They are included in the

@@ -10,7 +10,7 @@ created: 16-Dec-2018
 python_status: Active
 url: https://peps.python.org/pep-0013/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0013.rst
-source_commit: 54361685ea1af431bb2770926a9f6976db8d90f8
+source_commit: 9ed444d9bd517f8b8a126f7c1c8df41ef11a3a4c
 ---
 
 # Abstract
@@ -319,6 +319,7 @@ described herein.
 - December 2023: `8105`{.interpreted-text role="pep"}
 - December 2024: `8106`{.interpreted-text role="pep"}
 - December 2025: `8107`{.interpreted-text role="pep"}
+- December 2026: `8108`{.interpreted-text role="pep"}
 
 ## History of amendments
 

@@ -11,7 +11,7 @@ post_history:
 python_status: Draft
 url: https://peps.python.org/pep-0653/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0653.rst
-source_commit: 5f613971e16f90fbfc308af5b2163e4c2dee53cf
+source_commit: 6d18c8b2ff028ee7e2f21715fde1d4758481fd0e
 ---
 
 # Abstract
@@ -767,148 +767,132 @@ specification for an extremely rare case.
 
 # Code examples
 
-    class Symbol:
-        __match_class__ = MATCH_SELF
-
-This:
-
-    case [a, b] if a is b:
-
-translates to:
-
-    $kind = type($value).__match_container__
-    if $kind != MATCH_SEQUENCE:
-        FAIL
-    if len($value) != 2:
-        FAIL
-    a, b = $value
-    if not a is b:
-        FAIL
-
-This:
-
-    case [a, *b, c]:
-
-translates to:
-
-    $kind = type($value).__match_container__
-    if $kind != MATCH_SEQUENCE:
-        FAIL
-    if len($value) < 2:
-        FAIL
-    a, *b, c = $value
-
-This:
-
-    case {"x": x, "y": y} if x > 2:
-
-translates to:
-
-    $kind = type($value).__match_container__
-    if $kind != MATCH_MAPPING:
-        FAIL
-    $tmp = $value.get("x", $sentinel)
-    if $tmp is $sentinel:
-        FAIL
-    x = $tmp
-    $tmp = $value.get("y", $sentinel)
-    if $tmp is $sentinel:
-        FAIL
-    y = $tmp
-    if not x > 2:
-        FAIL
-
-This:
-
-    case {"x": x, "y": y, **z}:
-
-translates to:
-
-    $kind = type($value).__match_container__
-    if $kind != MATCH_MAPPING:
-        FAIL
-    $tmp = dict($value)
-    if not $tmp.keys() >= {"x", "y"}:
-        FAIL
-    x = $tmp.pop("x")
-    y = $tmp.pop("y")
-    z = $tmp
-
-This:
-
-    match ClsName(x, y):
-
-translates to:
-
-    if not isinstance($value, ClsName):
-        FAIL
-    $attrs = ClsName.__match_args__
-    if len($attr) < 2:
-        FAIL
-    try:
-        x = getattr($value, $attrs[0])
-        y = getattr($value, $attrs[1])
-    except AttributeError:
-        FAIL
-
-This:
-
-    match ClsName(a=x, b=y):
-
-translates to:
-
-    if not isinstance($value, ClsName):
-        FAIL
-    try:
-        x = $value.a
-        y = $value.b
-    except AttributeError:
-        FAIL
-
-This:
-
-    match ClsName(x, a=y):
-
-translates to:
-
-    if not isinstance($value, ClsName):
-        FAIL
-    $attrs = ClsName.__match_args__
-    if len($attr) < 1:
-        raise TypeError(...)
-    $positional_names = $attrs[:1]
-    try:
-        x = getattr($value, $attrs[0])
-        if "a" in $positional_names:
-            raise TypeError(...)
-        y = $value.a
-    except AttributeError:
-        FAIL
-
-    class Basic:
-        __match_class__ = MATCH_POSITIONAL
-        def __deconstruct__(self):
-            return self._args
-
 # Copyright
 
 This document is placed in the public domain or under the
 CC0-1.0-Universal license, whichever is more permissive.
 
 [^1]:
+        class Symbol:
+            __match_class__ = MATCH_SELF
 
-[^2]:
+[^2]: This:
 
-[^3]:
+        case [a, b] if a is b:
 
-[^4]:
+    translates to:
 
-[^5]:
+        $kind = type($value).__match_container__
+        if $kind != MATCH_SEQUENCE:
+            FAIL
+        if len($value) != 2:
+            FAIL
+        a, b = $value
+        if not a is b:
+            FAIL
 
-[^6]:
+[^3]: This:
 
-[^7]:
+        case [a, *b, c]:
 
-[^8]:
+    translates to:
+
+        $kind = type($value).__match_container__
+        if $kind != MATCH_SEQUENCE:
+            FAIL
+        if len($value) < 2:
+            FAIL
+        a, *b, c = $value
+
+[^4]: This:
+
+        case {"x": x, "y": y} if x > 2:
+
+    translates to:
+
+        $kind = type($value).__match_container__
+        if $kind != MATCH_MAPPING:
+            FAIL
+        $tmp = $value.get("x", $sentinel)
+        if $tmp is $sentinel:
+            FAIL
+        x = $tmp
+        $tmp = $value.get("y", $sentinel)
+        if $tmp is $sentinel:
+            FAIL
+        y = $tmp
+        if not x > 2:
+            FAIL
+
+[^5]: This:
+
+        case {"x": x, "y": y, **z}:
+
+    translates to:
+
+        $kind = type($value).__match_container__
+        if $kind != MATCH_MAPPING:
+            FAIL
+        $tmp = dict($value)
+        if not $tmp.keys() >= {"x", "y"}:
+            FAIL
+        x = $tmp.pop("x")
+        y = $tmp.pop("y")
+        z = $tmp
+
+[^6]: This:
+
+        match ClsName(x, y):
+
+    translates to:
+
+        if not isinstance($value, ClsName):
+            FAIL
+        $attrs = ClsName.__match_args__
+        if len($attr) < 2:
+            FAIL
+        try:
+            x = getattr($value, $attrs[0])
+            y = getattr($value, $attrs[1])
+        except AttributeError:
+            FAIL
+
+[^7]: This:
+
+        match ClsName(a=x, b=y):
+
+    translates to:
+
+        if not isinstance($value, ClsName):
+            FAIL
+        try:
+            x = $value.a
+            y = $value.b
+        except AttributeError:
+            FAIL
+
+[^8]: This:
+
+        match ClsName(x, a=y):
+
+    translates to:
+
+        if not isinstance($value, ClsName):
+            FAIL
+        $attrs = ClsName.__match_args__
+        if len($attr) < 1:
+            raise TypeError(...)
+        $positional_names = $attrs[:1]
+        try:
+            x = getattr($value, $attrs[0])
+            if "a" in $positional_names:
+                raise TypeError(...)
+            y = $value.a
+        except AttributeError:
+            FAIL
 
 [^9]:
+        class Basic:
+            __match_class__ = MATCH_POSITIONAL
+            def __deconstruct__(self):
+                return self._args

@@ -15,7 +15,7 @@ post_history:
 python_status: Draft
 url: https://peps.python.org/pep-0824/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0824.rst
-source_commit: c6e5645adbef5714f29a5acd7299b5cd3540edcf
+source_commit: ca7730370ad6b44fbd2f1b5fb4054f00a828d07f
 ---
 
 # Abstract
@@ -302,7 +302,7 @@ either `??` or `??=` raised a `SyntaxError`.
 
 There are no new security implications from this proposal.
 
-# How to Teach This
+# How to Teach This {#pep0824-how-to-teach}
 
 ## Prerequisites
 
@@ -757,8 +757,8 @@ cases like overwriting `None` values inside an object, as shown in
   - Added [Add protocol to customize coalesce
     behavior](#add-protocol-to-customize-coalesce-behavior) as rejected
     idea.
-- 20-Oct-2026: Turned [How to Teach This](##REF##Operator precedence)
-  into a mini-tutorial.
+- 20-Oct-2026: Turned `pep0824-how-to-teach`{.interpreted-text
+  role="ref"} into a mini-tutorial.
 
 # Copyright
 

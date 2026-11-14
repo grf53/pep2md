@@ -18,7 +18,7 @@ resolution: https://discuss.python.org/t/18183/26
 python_status: Final
 url: https://peps.python.org/pep-0683/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0683.rst
-source_commit: ef564aa3407a3d5367a99f4ac9a4bd9b1dde7dc1
+source_commit: 588573773e6de1c00d70789d78c872870434249a
 ---
 
 ::: canonical-doc
@@ -463,7 +463,7 @@ indicator that the object can be safely modified.) All other values are
 considered \"not 0 or 1\".
 
 This information will be clarified in the
-[documentation](#documentation).
+`documentation <pep683-documentation>`{.interpreted-text role="ref"}.
 
 Arguably, the existing refcount-related API should be modified to
 reflect what we want users to expect. Something like the following:
@@ -738,7 +738,7 @@ later if necessary.
 TODO: Add a note indicating that the implemented solution does not
 affect the overall \~performance-neutral\~ outcome.
 
-## Documentation
+## Documentation {#pep683-documentation}
 
 The immortal objects behavior and API are internal, implementation
 details and will not be added to the documentation.

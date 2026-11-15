@@ -16,7 +16,7 @@ post_history:
 python_status: Draft
 url: https://peps.python.org/pep-0852/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0852.rst
-source_commit: e9bebc8d00db1a08d48e52922247cd764bc60ed8
+source_commit: 9c741b856120ff9cff7358172ea5849a39ed8626
 ---
 
 # Abstract
@@ -31,8 +31,7 @@ example:
 static int
 return_result(PyObject *asyncobj, PyObject *result)
 {
-    PyAsync_SetResult(asyncobj, result);
-    return 1;
+    return PyAsync_SetResult(asyncobj, result) == 0;
 }
 
 /* Equivalent to: async def await_from_c(coro): return await coro */
@@ -220,6 +219,15 @@ role="c:type"} object; passing any other object is undefined behavior.
 Callbacks receive `borrowed references <borrowed
 reference>`{.interpreted-text role="term"} to their arguments.
 
+While the examples in this proposal heavily use the
+`asyncio`{.interpreted-text role="mod"} module, nothing in this API
+depends on it, because `PyAsync`{.interpreted-text role="c:type"} object
+only implements the coroutine *protocol*
+(`collections.abc.Coroutine`{.interpreted-text role="class"} and not
+`types.CoroutineType`{.interpreted-text role="class"}). As such, a
+`PyAsync` object can be driven by any event loop that can drive a
+non-native coroutine.
+
 ## Async objects
 
 > An opaque Python object that implements the
@@ -263,7 +271,13 @@ reference>`{.interpreted-text role="term"} to their arguments.
 > must not be `NULL`.
 >
 > This function stores a strong reference to *result*, releasing any
-> previously stored result. It cannot fail and returns `0`.
+> previously stored result.
+>
+> Return `0` on success, or `-1` with an exception set on failure.
+> `TypeError`{.interpreted-text role="exc"} is raised if *asyncobj* is
+> not a `PyAsync`{.interpreted-text role="c:type"} object, and
+> `SystemError`{.interpreted-text role="exc"} is raised if *result* is
+> `NULL`.
 
 ## Coroutine protocol
 
@@ -356,9 +370,11 @@ raise `SystemError`{.interpreted-text role="exc"}.
 > Return `0` on success, or `-1` with an exception set on failure.
 
 > Like `PyAsync_AddAwait`{.interpreted-text role="c:func"}, but steals a
-> reference to *expr* on both success and failure. If *expr* is `NULL`,
-> return `-1` without changing the current exception, which is assumed
-> to have been set by whatever produced *expr*.
+> reference to *awaitable* on both success and failure. If *awaitable*
+> is `NULL`, return `-1` without changing the current exception, which
+> is assumed to have been set by whatever produced *awaitable*. This
+> allows the result of a call to be passed directly, without a separate
+> error check.
 >
 > Otherwise, return `0` on success, or `-1` with an exception set on
 > failure.
@@ -385,7 +401,12 @@ raise `SystemError`{.interpreted-text role="exc"}.
 > The currently awaited operation, if any, is dropped without being
 > closed. This function is unrelated to `asyncio`{.interpreted-text
 > role="mod"} task cancellation, which reaches the object through
-> `throw()`. It cannot fail.
+> `throw()`.
+>
+> This function cannot fail. Like a deallocator, it only releases
+> references; an exception raised by a destructor that runs as a result
+> is reported through `sys.unraisablehook`{.interpreted-text
+> role="func"} and is not propagated to the caller.
 
 > Append an `async with`{.interpreted-text role="keyword"} block using
 > *context_manager*. When the operation runs, the `__aenter__` method of
@@ -426,29 +447,43 @@ raise `SystemError`{.interpreted-text role="exc"}.
 ## Value storage
 
 Each `PyAsync`{.interpreted-text role="c:type"} object has one object
-slot and one arbitrary pointer slot for storing state between callbacks.
-Both slots are initially `NULL`. Code that needs more than one object
-stores a tuple or other container.
+slot and one data pointer slot for storing state between callbacks. Both
+slots are initially `NULL`. Code that needs more than one object stores
+a tuple or other container.
 
 > Store a strong reference to *value* in the object slot, releasing the
 > previously stored reference. If *value* is `NULL`, clear the slot.
 >
-> This function cannot fail and returns `0`.
+> Return `0` on success, or `-1` with `TypeError`{.interpreted-text
+> role="exc"} set if *asyncobj* is not a `PyAsync`{.interpreted-text
+> role="c:type"} object.
 
 > Return a new `strong reference`{.interpreted-text role="term"} to the
 > object stored in the object slot, or `NULL` if the slot is empty. This
 > function cannot fail and does not set an exception when the slot is
 > empty.
 
-> Store *value* in the arbitrary pointer slot, replacing the previous
-> pointer. *value* may be `NULL`. The caller is responsible for the
-> lifetime of any memory referenced by the pointer.
+> Store *data* in the data pointer slot, replacing the previous pointer.
+> *data* may be `NULL`.
 >
-> This function cannot fail and returns `0`.
+> *free_func* is a finalizer for *data*, and may be `NULL`. If it is not
+> `NULL`, it is called exactly once with *data* as its argument when
+> when it is replaced by another call to this function, or when
+> *asyncobj* is deallocated.
+>
+> *free_func* is called with an
+> `attached thread state`{.interpreted-text role="term"}. It must not
+> raise an exception and must not use *asyncobj*. If *free_func* is
+> `NULL`, the caller is responsible for the lifetime of any memory
+> referenced by the pointer.
+>
+> Return `0` on success, or `-1` with `TypeError`{.interpreted-text
+> role="exc"} set if *asyncobj* is not a `PyAsync`{.interpreted-text
+> role="c:type"} object. On failure, *free_func* is not called.
 
-> Return the pointer stored in the arbitrary pointer slot, or `NULL` if
-> the slot is empty. This function cannot fail and does not set an
-> exception when the slot is empty.
+> Return the pointer stored in the data pointer slot, or `NULL` if the
+> slot is empty. This function cannot fail and does not set an exception
+> when the slot is empty.
 
 ## Limited API
 
@@ -467,6 +502,14 @@ constructs, *not* an API for describing all capabilities of
 for adding an `asyncio` C API in the future, its only goal is to make
 `async def`{.interpreted-text role="keyword"} functions possible to
 implement in the C API.
+
+As a result, `PyAsync`{.interpreted-text role="c:type"} objects are not
+specific to `asyncio`. They implement
+`collections.abc.Coroutine`{.interpreted-text role="class"} and nothing
+more, so they work with any event loop that accepts coroutines, such as
+those provided by Twisted, Tornado, or Trio. The specification and
+examples refer to `asyncio` only because it is the event loop in the
+standard library.
 
 ## Deviations from PyAwaitable {#pep-852-deviations}
 
@@ -542,8 +585,7 @@ handles suspension and resumption for the extension.
 static int
 return_result(PyObject *asyncobj, PyObject *result)
 {
-    PyAsync_SetResult(asyncobj, result);
-    return 1;
+    return PyAsync_SetResult(asyncobj, result) == 0;
 }
 
 /* Equivalent to: async def call_async(func): return await func() */
@@ -554,8 +596,8 @@ call_async(PyObject *self, PyObject *func) /* METH_O */
     if (asyncobj == NULL) {
         return NULL;
     }
-    if (PyAsync_AddExpr(asyncobj, PyObject_CallNoArgs(func),
-                        return_result, NULL) < 0) {
+    if (PyAsync_AddAwaitSteal(asyncobj, PyObject_CallNoArgs(func),
+                              return_result, NULL) < 0) {
         PyAsync_Cancel(asyncobj);
         Py_DECREF(asyncobj);
         return NULL;
@@ -583,16 +625,16 @@ multiply_result(PyObject *asyncobj, PyObject *value)
     if (result == NULL) {
         return 0;
     }
-    PyAsync_SetResult(asyncobj, result);
+    int res = PyAsync_SetResult(asyncobj, result);
     Py_DECREF(result);
-    return 1;
+    return res == 0;
 }
 ```
 
 ### Example: Handling a timeout
 
 In `call_async` above, replace the final `NULL` argument to
-`PyAsync_AddExpr`{.interpreted-text role="c:func"} with
+`PyAsync_AddAwaitSteal`{.interpreted-text role="c:func"} with
 `timeout_to_none`. Awaiting the result then returns `None` on
 `TimeoutError`{.interpreted-text role="exc"}. Returning `0` from the
 callback lets other exceptions propagate.
@@ -604,7 +646,9 @@ timeout_to_none(PyObject *asyncobj, PyObject *exception)
     if (!PyErr_GivenExceptionMatches(exception, PyExc_TimeoutError)) {
         return 0;
     }
-    PyAsync_SetResult(asyncobj, Py_None);
+    if (PyAsync_SetResult(asyncobj, Py_None) < 0) {
+        return -1;
+    }
     return 1;
 }
 ```
@@ -638,7 +682,81 @@ read_body(PyObject *asyncobj, PyObject *size)
     PyObject *reader = PyAsync_GetValue(asyncobj);
     PyObject *coro = PyObject_CallMethod(reader, "readexactly", "O", size);
     Py_DECREF(reader);
-    return PyAsync_AddExpr(asyncobj, coro, return_result, NULL) == 0;
+    return PyAsync_AddAwaitSteal(asyncobj, coro, return_result, NULL) == 0;
+}
+```
+
+### Example: Sharing a C structure between callbacks
+
+State that is not a Python object can be kept in a structure stored with
+`PyAsync_SetData`{.interpreted-text role="c:func"}. Passing a free
+function ties the structure\'s lifetime to the
+`PyAsync`{.interpreted-text role="c:type"} object, so it is released
+even if `first` or `second` raises and `add_second` never runs.
+
+``` c
+typedef struct {
+    long long total;
+} sum_state;
+
+static int
+add_second(PyObject *asyncobj, PyObject *value)
+{
+    sum_state *state = PyAsync_GetData(asyncobj);
+    long long number = PyLong_AsLongLong(value);
+    if (number == -1 && PyErr_Occurred()) {
+        return 0;
+    }
+    PyObject *result = PyLong_FromLongLong(state->total + number);
+    if (result == NULL) {
+        return 0;
+    }
+    int res = PyAsync_SetResult(asyncobj, result);
+    Py_DECREF(result);
+    return res == 0;
+}
+
+static int
+add_first(PyObject *asyncobj, PyObject *value)
+{
+    sum_state *state = PyAsync_GetData(asyncobj);
+    state->total = PyLong_AsLongLong(value);
+    return !(state->total == -1 && PyErr_Occurred());
+}
+
+/* Equivalent to: async def add(first, second):
+                      return (await first) + (await second) */
+static PyObject *
+add(PyObject *self, PyObject *args) /* METH_VARARGS */
+{
+    PyObject *first, *second;
+    if (!PyArg_ParseTuple(args, "OO", &first, &second)) {
+        return NULL;
+    }
+    PyObject *asyncobj = PyAsync_New();
+    if (asyncobj == NULL) {
+        return NULL;
+    }
+    sum_state *state = PyMem_Malloc(sizeof(sum_state));
+    if (state == NULL) {
+        PyErr_NoMemory();
+        goto error;
+    }
+    state->total = 0;
+    if (PyAsync_SetData(asyncobj, state, PyMem_Free) < 0) {
+        PyMem_Free(state);
+        goto error;
+    }
+    if (PyAsync_AddAwait(asyncobj, first, add_first, NULL) < 0
+        || PyAsync_AddAwait(asyncobj, second, add_second, NULL) < 0) {
+        goto error;
+    }
+    return asyncobj;
+
+error:
+    PyAsync_Cancel(asyncobj);
+    Py_DECREF(asyncobj);
+    return NULL;
 }
 ```
 
@@ -698,6 +816,111 @@ asyncio.run(main())
 callback after acquiring the lock, and releases the lock even if the
 dictionary update raises an exception.
 
+### Example: Implementing a C++ wrapper {#pep-852-cpp-wrapper}
+
+Wrappers for other languages usually want each callback to be a closure
+with its own captured state, such as a `std::function` in C++. A wrapper
+that does this can be implemented on top of this API:
+
+``` cpp
+#include <Python.h>
+#include <deque>
+#include <exception>
+#include <functional>
+#include <memory>
+
+using Callback = std::function<int(PyObject *asyncobj, PyObject *result)>;
+using Queue = std::deque<Callback>;
+
+static void
+free_queue(void *ptr)
+{
+    delete static_cast<Queue *>(ptr);
+}
+
+static int
+trampoline(PyObject *asyncobj, PyObject *result)
+{
+    auto *queue = static_cast<Queue *>(PyAsync_GetData(asyncobj));
+    Callback callback = std::move(queue->front());
+    queue->pop_front();
+    try {
+        return callback(asyncobj, result);
+    }
+    catch (const std::exception &exc) {
+        /* C++ exceptions must not unwind into the interpreter. */
+        PyErr_SetString(PyExc_RuntimeError, exc.what());
+        return 0;
+    }
+}
+
+static int
+add_await(PyObject *asyncobj, PyObject *awaitable, Callback callback)
+{
+    auto *queue = static_cast<Queue *>(PyAsync_GetData(asyncobj));
+    try {
+        if (queue == nullptr) {
+            auto owned = std::make_unique<Queue>();
+            if (PyAsync_SetData(asyncobj, owned.get(), free_queue) < 0) {
+                return -1;
+            }
+            /* The async object owns the queue from here on. */
+            queue = owned.release();
+        }
+        queue->push_back(std::move(callback));
+    }
+    catch (const std::bad_alloc &) {
+        PyErr_NoMemory();
+        return -1;
+    }
+    if (PyAsync_AddAwait(asyncobj, awaitable, trampoline, nullptr) < 0) {
+        queue->pop_back();
+        return -1;
+    }
+    return 0;
+}
+```
+
+With this wrapper, a coroutine function can be written using lambdas
+that capture their own state:
+
+``` cpp
+/* Equivalent to: async def scale(awaitable, factor):
+                      return (await awaitable) * factor */
+static PyObject *
+scale(PyObject *self, PyObject *args) /* METH_VARARGS */
+{
+    PyObject *awaitable;
+    double factor;
+    if (!PyArg_ParseTuple(args, "Od", &awaitable, &factor)) {
+        return nullptr;
+    }
+    PyObject *asyncobj = PyAsync_New();
+    if (asyncobj == nullptr) {
+        return nullptr;
+    }
+    auto multiply = [factor](PyObject *asyncobj, PyObject *value) -> int {
+        double number = PyFloat_AsDouble(value);
+        if (number == -1.0 && PyErr_Occurred()) {
+            return 0;
+        }
+        PyObject *result = PyFloat_FromDouble(number * factor);
+        if (result == nullptr) {
+            return 0;
+        }
+        int res = PyAsync_SetResult(asyncobj, result);
+        Py_DECREF(result);
+        return res == 0;
+    };
+    if (add_await(asyncobj, awaitable, multiply) < 0) {
+        PyAsync_Cancel(asyncobj);
+        Py_DECREF(asyncobj);
+        return nullptr;
+    }
+    return asyncobj;
+}
+```
+
 # Reference Implementation
 
 A reference implementation of this PEP can be found
@@ -738,6 +961,49 @@ Python frame with bytecode, and thus there is no way to construct one
 around C code without emulating a frame. A new type is simpler and
 avoids exposing frame internals.
 
+## Per-callback data pointers
+
+Antoine Pitrou [suggested](https://discuss.python.org/t/110003/4) that
+each callback should take its own user data argument, as most
+callback-based C APIs do:
+
+``` c
+typedef int (*PyAsync_Callback)(PyObject *asyncobj,
+                                PyObject *result, uintptr_t data);
+typedef int (*PyAsync_Error)(PyObject *asyncobj,
+                             PyObject *exception, uintptr_t data);
+int PyAsync_AddAwait(
+    PyObject *asyncobj, PyObject *awaitable,
+    PyAsync_Callback result_cb, uintptr_t result_cb_data,
+    PyAsync_Error error_cb, uintptr_t error_cb_data);
+```
+
+This was rejected in favor of a single data pointer per
+`PyAsync`{.interpreted-text role="c:type"} object, for the following
+reasons:
+
+1.  The callbacks of a `PyAsync`{.interpreted-text role="c:type"} object
+    are not independent components. They are the pieces of one coroutine
+    function, split up only because C has no native `await`, and they
+    run in an order known to the developer. The data pointer plays the
+    role of the function\'s local variables, which are naturally shared
+    by the whole function.
+2.  Per-callback data makes every function that queues an operation take
+    two more arguments, and increases the size of each queue entry by
+    two pointers, even though most users would pass the same pointer (or
+    `NULL`) every time.
+3.  Each per-callback pointer would need its own lifetime management,
+    which either means two more finalizer arguments per operation or a
+    source of leaks when an operation is cancelled before its callback
+    runs.
+
+Wrappers that do want a closure per callback (for example, a C++ wrapper
+that accepts `std::function` objects) can be built on the single data
+pointer by storing a queue of closures in it and registering a
+trampoline as the callback; see
+`the C++ wrapper example <pep-852-cpp-wrapper>`{.interpreted-text
+role="ref"}.
+
 ## Keeping the API in a third-party library
 
 See `pep-852-no-third-party`{.interpreted-text role="ref"}.
@@ -754,7 +1020,23 @@ years.
 
 # Change History
 
-TBD.
+- 14-Nov-2026
+  - Renamed `PyAsync_AddExpr` to
+    `PyAsync_AddAwaitSteal`{.interpreted-text role="c:func"}.
+  - Renamed `PyAsync_SetArbValue` and `PyAsync_GetArbValue` to
+    `PyAsync_SetData`{.interpreted-text role="c:func"} and
+    `PyAsync_GetData`{.interpreted-text role="c:func"}.
+  - Added a *free_func* parameter to `PyAsync_SetData`{.interpreted-text
+    role="c:func"}.
+  - `PyAsync_SetResult`{.interpreted-text role="c:func"},
+    `PyAsync_SetValue`{.interpreted-text role="c:func"}, and
+    `PyAsync_SetData`{.interpreted-text role="c:func"} can now fail
+    instead of always returning `0`.
+  - Clarified that `PyAsync`{.interpreted-text role="c:type"} objects
+    are not tied to `asyncio`{.interpreted-text role="mod"}, and that
+    `PyAsync_Cancel`{.interpreted-text role="c:func"} reports errors as
+    unraisable exceptions.
+  - Added \"Per-callback data pointers\" to the rejected ideas.
 
 # Copyright
 

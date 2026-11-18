@@ -4,17 +4,19 @@ title: Adding python-version to pyvenv.cfg
 author:
 - Konstantin Schütze <konstin@mailbox.org>
 sponsor: Alex Waygood <alex.waygood@gmail.com>
-discussions_to: Pending
+discussions_to: https://discuss.python.org/t/110159
 status: Draft
 type: Standards Track
+topic: Packaging
 created: 15-Jul-2026
 python_version: '3.16'
 post_history:
-- Pending
+- '`21-Jul-2026 <https://discuss.python.org/t/108234>`__'
+- '`17-Nov-2026 <https://discuss.python.org/t/110159>`__'
 python_status: Draft
 url: https://peps.python.org/pep-0838/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0838.rst
-source_commit: c5806626c9f6ee20de848652ccff60eb96957b00
+source_commit: 660076f584290209dac396ea7514297ada5ee7bc
 ---
 
 # Abstract

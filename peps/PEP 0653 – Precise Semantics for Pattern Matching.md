@@ -11,7 +11,7 @@ post_history:
 python_status: Draft
 url: https://peps.python.org/pep-0653/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0653.rst
-source_commit: 6d18c8b2ff028ee7e2f21715fde1d4758481fd0e
+source_commit: 69c1a1f5320791c4ed553000e99f4e53274f913e
 ---
 
 # Abstract
@@ -122,7 +122,7 @@ matching a pattern has three parts:
 
 To determine whether a value can match a particular kind of pattern, we
 add the `__match_container__` and `__match_class__` attributes. This
-allows the kind of a value to be determined in a efficient fashion.
+allows the kind of a value to be determined in an efficient fashion.
 
 # Specification
 
@@ -261,7 +261,7 @@ translates to:
     if $value != LITERAL:
         FAIL
 
-except when the literal is one of `None`, `True` or `False` , when it
+except when the literal is one of `None`, `True` or `False`, when it
 translates to:
 
     if $value is not LITERAL:

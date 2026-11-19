@@ -16,7 +16,7 @@ replaces: '543'
 python_status: Draft
 url: https://peps.python.org/pep-0748/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0748.rst
-source_commit: 333c24fe4329f15f54434e23b07afe7423b04488
+source_commit: 323b84c850a0b2de33e9cbda94f9afb831fd5633
 ---
 
 # Abstract
@@ -790,11 +790,11 @@ is substantially more restricted than OpenSSL in many ways, as it has a
 much more restricted class of users. One of these substantial
 restrictions is in controlling supported cipher suites.
 
-Ciphers in Network Framework are represented by a Objective-C `uint16_t`
-enum. This enum has one entry per cipher suite, with no aggregate
-entries, meaning that it is not possible to reproduce the meaning of an
-OpenSSL cipher string like `“ECDH+AESGCM”` without hand-coding which
-categories each enum member falls into.
+Ciphers in Network Framework are represented by an Objective-C
+`uint16_t` enum. This enum has one entry per cipher suite, with no
+aggregate entries, meaning that it is not possible to reproduce the
+meaning of an OpenSSL cipher string like `“ECDH+AESGCM”` without
+hand-coding which categories each enum member falls into.
 
 However, the names of most of the enum members are in line with the
 formal names of the cipher suites: that is, the cipher suite that
@@ -862,7 +862,7 @@ globally with
 `SSL_CipherPrefSetDefault(PRInt32 cipher, PRBool enabled)`, and
 `SSL_CipherPrefSet(PRFileDesc *fd, PRInt32 cipher, PRBool enabled)` for
 a connection. The cipher `PRInt32` number is a signed 32-bit integer
-that directly corresponds to an registered IANA id, e.g. `0x1301` is
+that directly corresponds to a registered IANA id, e.g. `0x1301` is
 `TLS_AES_128_GCM_SHA256`. Contrary to OpenSSL, the preference order of
 ciphers is fixed and cannot be modified at runtime.
 
@@ -1463,7 +1463,7 @@ way. Sometimes, users want to do imprudent things like disable
 certificate validation for testing purposes. To this end, we propose a
 separate `insecure` module that allows users to do this. This module
 contains insecure variants of the configuration, context, and
-implementation objects, which allow to disable certificate validation as
+implementation objects, which allow disabling certificate validation as
 well as the server hostname check.
 
 This functionality is placed in a separate module to make it as hard as

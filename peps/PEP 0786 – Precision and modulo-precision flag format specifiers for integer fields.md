@@ -15,7 +15,7 @@ post_history:
 python_status: Draft
 url: https://peps.python.org/pep-0786/
 source_path: https://github.com/python/peps/blob/main/peps/pep-0786.rst
-source_commit: 9656002b4c8b8cdb96376133e71d40d8f123499e
+source_commit: da92141f6f291009a8b4fa85e13e338cd8f88b58
 ---
 
 # Abstract
@@ -285,7 +285,7 @@ whence this PEP proposes the latter, lossy, behavior.
 ### Minimal Width Representation Convention
 
 This idea was fiercely entertained only due to its lossless behavior,
-however it is a obstacle to ergonomics in every candidate use case.
+however it is an obstacle to ergonomics in every candidate use case.
 These arguments about the aesthetics of string rendering are not
 irrational or about personal taste, but rather they are crucial in how
 information is communicated to the end user.
